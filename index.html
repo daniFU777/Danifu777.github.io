@@ -141,7 +141,7 @@
         display: block; 
     }
 
-    /* Grid de la Calculadora - Estilos (Se mantienen igual) */
+    /* Grid de la Calculadora - Estilos */
     .calculator-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -155,11 +155,15 @@
         background: #333; color: var(--color-text); border: 1px solid var(--color-border); padding: 10px 0;
         font-size: 1.1em; cursor: pointer; transition: background 0.1s; border-radius: 4px; user-select: none; 
     }
-    .calc-button:nth-child(20) { grid-column: 1 / span 2; }
-    .calc-button:nth-child(21) { grid-column: 3 / span 1; }
-    .calc-button:nth-child(22) { display: none; }
-    .calc-button:nth-child(16) { grid-row: 4 / span 2; grid-column: 4 / span 1;}
-
+    /* El botón = (igual) ocupa dos filas y una columna. */
+    .calc-button.equals { 
+        grid-row: 4 / span 2; 
+        grid-column: 4 / span 1;
+    }
+    /* El botón 0 (cero) ocupa dos columnas. */
+    .calc-button.zero { 
+        grid-column: 1 / span 2; 
+    }
 
     /* --- Estilos del Bloc de Notas MAXIMIZADO --- */
     .notepad-panel {
@@ -311,9 +315,9 @@
                   <button class="calc-button" onclick="appendNumber('1')">1</button>
                   <button class="calc-button" onclick="appendNumber('2')">2</button>
                   <button class="calc-button" onclick="appendNumber('3')">3</button>
-                  <button class="calc-button operator" onclick="calculate()">=</button>
+                  <button class="calc-button operator equals" onclick="calculate()">=</button>
                   
-                  <button class="calc-button" onclick="appendNumber('0')">0</button>
+                  <button class="calc-button zero" onclick="appendNumber('0')">0</button>
                   <button class="calc-button" onclick="appendNumber('.')">.</button>
               </div>
           </div>
@@ -353,8 +357,8 @@
 
   <script>
     // --- Lógica JavaScript ---
-    
-    // --- Calculadora --- (Se mantiene igual)
+
+    // --- Calculadora ---
     const display = document.getElementById('display');
     let currentInput = '0';
     let previousInput = '';
@@ -362,6 +366,7 @@
     let waitingForSecondOperand = false;
 
     function updateDisplay() {
+        // Limita a 15 caracteres para no desbordar
         display.textContent = currentInput.length > 15 ? currentInput.slice(0, 15) : currentInput;
     }
 
@@ -370,6 +375,7 @@
             currentInput = number;
             waitingForSecondOperand = false;
         } else {
+            // Maneja el punto decimal y el cero inicial
             if (number === '.' && currentInput.includes('.')) return;
             currentInput = currentInput === '0' && number !== '.' ? number : currentInput + number;
         }
@@ -512,7 +518,7 @@
     const nextBtn = document.getElementById('nextBtn');
     
     let currentTrackIndex = -1; 
-    // SOLUCIÓN: Usar minúsculas en la ruta.
+    // RUTA CORREGIDA PARA COMPATIBILIDAD CON GITHUB PAGES (SERVIDOR LINUX)
     const MUSIC_FOLDER = "yt/"; 
 
     function getRandomTrackIndex(excludeIndex) {
