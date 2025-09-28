@@ -11,9 +11,12 @@
       --color-header-bg: #282828;
       --color-border: #444;
       --color-highlight: #A855F7; /* Morado/Rosado */
-      --color-main-bg: #1F3F23;
+      --color-main-bg: #282828; /* Color de fondo principal */
       --color-text: #EAEAEA;
+      --color-input-bg: #1F1F1F; /* Fondo para inputs/areas de texto */
       --shadow-light: 0 0 8px rgba(0, 0, 0, 0.5);
+      --top-tools-height: 300px; /* ALTURA FIJA PARA CALCULADORA Y GRÁFICO */
+      --main-gap: 15px; /* ESPACIO DE SEPARACIÓN EN .MAIN */
     }
 
     body {
@@ -21,12 +24,12 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: var(--color-dark-bg);
       color: var(--color-text);
-      overflow: hidden; /* CRUCIAL: Evita scroll en toda la página */
+      overflow: hidden; 
     }
 
     .container {
       display: grid;
-      grid-template-columns: 70% 30%;
+      grid-template-columns: 1fr;
       grid-template-rows: auto 1fr;
       height: 100vh;
     }
@@ -42,6 +45,8 @@
       border-bottom: 2px solid var(--color-highlight);
       box-shadow: 0 3px 6px rgba(0,0,0,0.8);
       z-index: 10;
+      position: sticky; 
+      top: 0;
     }
 
     .top-left, .top-right {
@@ -62,50 +67,154 @@
       white-space: nowrap;
     }
 
-    .box:hover {
-      background: #444;
-    }
-    
-    /* Estilos para los botones de control de música */
-    .music-control {
-        cursor: pointer;
-        padding: 4px 8px;
-        font-weight: bold;
-        text-align: center;
-    }
-
-    .music-control:active {
-        background: var(--color-highlight);
-        color: var(--color-header-bg);
-    }
-
-    .currency-info span, .song-info span {
-      color: var(--color-highlight);
-      font-weight: bold;
-    }
-    
-    /* Estilos para el área principal (main) */
+    /* Estilos para el área principal (main) - FLEX CONTAINER */
     .main {
-      background: var(--color-main-bg);
-      padding: 15px;
-      overflow-y: auto; /* Solo esta zona scrollea */
-      border-right: 1px solid var(--color-border);
+      background: var(--color-main-bg); 
+      padding: var(--main-gap);
+      display: flex;
+      flex-direction: column; 
+      gap: var(--main-gap);
+      
+      /* CRÍTICO: Aseguramos que la altura total es el 100% del espacio restante. */
+      height: calc(100vh - 52px); 
+      overflow-y: hidden; /* DESHABILITADO: El scroll ahora lo manejará el Notepad si es necesario */
+      
+      padding-right: calc(30% + 25px); 
     }
 
     h1 {
-      color: var(--color-text);
-      border-bottom: 2px dashed var(--color-border);
-      padding-bottom: 5px;
+      display: none; 
     }
     
-    /* Estilos para la barra lateral (aside) */
+    /* --- Contenedor de herramientas superiores (Calculadora + Mini-Gráfico) --- */
+    .top-tools-container {
+        display: flex;
+        gap: 20px;
+        /* CRÍTICO: Usamos la altura fija de la variable CSS */
+        height: var(--top-tools-height); 
+        flex-shrink: 0; 
+    }
+    
+    .tool-panel {
+        background: var(--color-input-bg);
+        border: 2px solid var(--color-highlight);
+        border-radius: 8px;
+        padding: 10px;
+        box-shadow: var(--shadow-light);
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .tool-panel h2 {
+        color: var(--color-highlight);
+        margin-top: 0;
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: 5px;
+        font-size: 1.2em;
+    }
+
+    /* --- Calculadora y Mini-Gráfico --- */
+    .calculator-panel {
+        width: 300px; 
+        flex-shrink: 0; 
+    }
+    
+    .chart-panel {
+        flex-grow: 1; 
+        overflow: hidden; 
+        padding: 0; 
+        border: 2px solid var(--color-highlight);
+        height: 100%; 
+    }
+    
+    .chart-panel h2 {
+        padding: 10px 10px 5px 10px; 
+        background: var(--color-input-bg); 
+        margin-bottom: 0;
+    }
+
+    .chart-iframe {
+        width: 100%;
+        height: calc(100% - 40px); 
+        border: none;
+        display: block; 
+    }
+
+    /* Grid de la Calculadora - Estilos (Se mantienen igual) */
+    .calculator-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5px;
+    }
+    #display {
+        grid-column: 1 / -1; background: #0D0D0D; color: var(--color-highlight); border: 1px solid var(--color-highlight);
+        text-align: right; padding: 8px; margin-bottom: 8px; font-size: 1.8em; overflow: hidden; height: 30px; line-height: 30px;
+    }
+    .calc-button {
+        background: #333; color: var(--color-text); border: 1px solid var(--color-border); padding: 10px 0;
+        font-size: 1.1em; cursor: pointer; transition: background 0.1s; border-radius: 4px; user-select: none; 
+    }
+    .calc-button:nth-child(20) { grid-column: 1 / span 2; }
+    .calc-button:nth-child(21) { grid-column: 3 / span 1; }
+    .calc-button:nth-child(22) { display: none; }
+    .calc-button:nth-child(16) { grid-row: 4 / span 2; grid-column: 4 / span 1;}
+
+
+    /* --- Estilos del Bloc de Notas MAXIMIZADO --- */
+    .notepad-panel {
+        /* CRÍTICO: Calculamos la altura restante:
+           100% de .main - (altura de top-tools) - (espacio de separación) */
+        height: calc(100% - var(--top-tools-height) - var(--main-gap));
+        
+        flex-grow: 1; 
+        background: var(--color-input-bg);
+        border: 2px solid var(--color-highlight);
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: var(--shadow-light);
+        display: flex;
+        flex-direction: column;
+        min-height: 100px; /* Mínimo de seguridad */
+    }
+    
+    .notepad-panel h2 {
+        color: var(--color-highlight);
+        margin-top: 0;
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: 5px;
+        font-size: 1.2em;
+        flex-shrink: 0; 
+    }
+
+    #notepad {
+        flex-grow: 1; 
+        width: 100%;
+        background: var(--color-input-bg);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+        padding: 10px;
+        resize: none; 
+        box-sizing: border-box;
+        font-size: 1em;
+        line-height: 1.4;
+        overflow-y: auto;
+    }
+
+    /* Estilos para la barra lateral (aside) - POSICIÓN FIJA */
     .sidebar {
+      position: fixed; 
+      right: 0;
+      top: 52px; 
+      bottom: 0; 
+      width: 30%; 
       display: flex;
       flex-direction: column;
       gap: 10px;
       padding: 10px;
       background: var(--color-header-bg);
-      overflow: hidden;
+      overflow: hidden; 
+      z-index: 5; 
     }
 
     /* Estilos para los iframes (videos) */
@@ -117,44 +226,42 @@
       box-shadow: 0 0 10px rgba(168, 85, 247, 0.4); 
     }
 
-    /* Estilo de la barra de desplazamiento (para navegadores WebKit) */
-    .main::-webkit-scrollbar {
-      width: 8px;
-    }
+    /* PERSONALIZACIÓN DE BARRAS DE DESPLAZAMIENTO (Morado/Rosa) */
+    
+    /* Bloc de Notas Scroll */
+    #notepad::-webkit-scrollbar { width: 10px; }
+    #notepad::-webkit-scrollbar-track { background: var(--color-input-bg); border-radius: 5px; }
+    #notepad::-webkit-scrollbar-thumb { background-color: var(--color-highlight); border-radius: 5px; border: 2px solid var(--color-input-bg); }
 
-    .main::-webkit-scrollbar-track {
-      background: var(--color-main-bg);
-    }
-
-    .main::-webkit-scrollbar-thumb {
-      background-color: var(--color-highlight); 
-      border-radius: 20px;
-      border: 2px solid var(--color-main-bg);
-    }
-
-    /* Media Query para responsividad en pantallas pequeñas */
+    /* Media Query para responsividad en pantallas pequeñas (Se mantienen igual) */
     @media (max-width: 900px) {
-      .container {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr auto;
-      }
-      
-      .main {
-        border-right: none;
-      }
-
       .sidebar {
-        height: 400px;
-        flex-direction: row;
-        overflow-x: auto;
-        border-top: 2px solid var(--color-highlight);
+        position: static; width: auto; top: auto; bottom: auto; height: 400px; flex-direction: row;
+        overflow-x: auto; border-top: 2px solid var(--color-highlight);
       }
-
+      .container {
+        grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; height: auto;
+      }
+      .main {
+        height: auto; overflow-y: visible; padding-right: 15px; 
+      }
+      .top-tools-container {
+        flex-direction: column; max-height: none; height: auto; 
+      }
+      .calculator-panel {
+        width: 100%;
+      }
+      .notepad-panel {
+        /* Vuelve a flex-grow en móvil */
+        height: auto;
+        flex-grow: 1;
+      }
       .sidebar iframe {
-        min-width: 80%;
-        height: 100%;
-        flex-shrink: 0; 
+        min-width: 80%; height: 100%; flex-shrink: 0; 
       }
+      .sidebar::-webkit-scrollbar { height: 8px; }
+      .sidebar::-webkit-scrollbar-track { background: var(--color-main-bg); }
+      .sidebar::-webkit-scrollbar-thumb { background-color: var(--color-highlight); border-radius: 20px; border: 2px solid var(--color-main-bg); }
     }
   </style>
 </head>
@@ -179,21 +286,53 @@
     </header>
 
     <main class="main">
-      <h1>Zona de Contenido Principal</h1>
-      <p>
-        Aquí va el texto que quieras.  
-        Probá hacer mucho texto para ver cómo la zona verde scrollea sin mover los videos ni la barra superior.
-      </p>
-      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Pellentesque a posuere nisl, vel ullamcorper turpis. Proin mattis, mi non vestibulum iaculis, nisi justo ultrices neque, nec faucibus nulla ipsum in libero.</p>
-      <p>Nam interdum felis at elit convallis, vel semper turpis tempor. Nulla facilisi. Aliquam erat volutpat. Fusce euismod, ligula vel gravida congue, enim nulla dapibus dolor, a euismod ex ante sit amet metus.</p>
-      <p>Sed non dui nec nisi tincidunt tincidunt. Aliquam erat volutpat. Donec vel ex sed odio congue finibus. Integer mattis, magna vitae consectetur ullamcorper, elit dolor eleifend magna, vel vulputate nisl mi a est.</p>
-      <p>Cras vel risus in libero interdum iaculis. Etiam at velit sed ipsum pulvinar aliquet. Phasellus ac libero vitae felis iaculis rhoncus. Suspendisse potenti.</p>
-      <p>Nulla facilisi. Integer vel nisl nec dui tincidunt tincidunt. Aliquam erat volutpat. Donec vel ex sed odio congue finibus.</p>
-      <p>Cras vel risus in libero interdum iaculis. Etiam at velit sed ipsum pulvinar aliquet. Phasellus ac libero vitae felis iaculis rhoncus. Suspendisse potenti.</p>
-      <p>Nulla facilisi. Integer vel nisl nec dui tincidunt tincidunt. Aliquam erat volutpat. Donec vel ex sed odio congue finibus.</p>
-      <p>Cras vel risus in libero interdum iaculis. Etiam at velit sed ipsum pulvinar aliquet. Phasellus ac libero vitae felis iaculis rhoncus. Suspendisse potenti.</p>
-      <p>Nulla facilisi. Integer vel nisl nec dui tincidunt tincidunt. Aliquam erat volutpat. Donec vel ex sed odio congue finibus.</p>
-      <p>Cras vel risus in libero interdum iaculis. Etiam at velit sed ipsum pulvinar aliquet. Phasellus ac libero vitae felis iaculis rhoncus. Suspendisse potenti.</p>
+      
+      <div class="top-tools-container">
+          
+          <div class="tool-panel calculator-panel">
+              <h2>Calculadora</h2>
+              <div id="display">0</div>
+              <div class="calculator-grid">
+                  <button class="calc-button clear" onclick="clearDisplay()">AC</button>
+                  <button class="calc-button operator" onclick="appendOperator('/')">/</button>
+                  <button class="calc-button operator" onclick="appendOperator('*')">x</button>
+                  <button class="calc-button" onclick="backspace()"><i class="fa-solid fa-delete-left"></i></button> 
+                  
+                  <button class="calc-button" onclick="appendNumber('7')">7</button>
+                  <button class="calc-button" onclick="appendNumber('8')">8</button>
+                  <button class="calc-button" onclick="appendNumber('9')">9</button>
+                  <button class="calc-button operator" onclick="appendOperator('-')">-</button>
+                  
+                  <button class="calc-button" onclick="appendNumber('4')">4</button>
+                  <button class="calc-button" onclick="appendNumber('5')">5</button>
+                  <button class="calc-button" onclick="appendNumber('6')">6</button>
+                  <button class="calc-button operator" onclick="appendOperator('+')">+</button>
+                  
+                  <button class="calc-button" onclick="appendNumber('1')">1</button>
+                  <button class="calc-button" onclick="appendNumber('2')">2</button>
+                  <button class="calc-button" onclick="appendNumber('3')">3</button>
+                  <button class="calc-button operator" onclick="calculate()">=</button>
+                  
+                  <button class="calc-button" onclick="appendNumber('0')">0</button>
+                  <button class="calc-button" onclick="appendNumber('.')">.</button>
+              </div>
+          </div>
+          
+          <div class="tool-panel chart-panel">
+              <h2>Mini-Gráfico (Oro/Dólar XAU/USD)</h2>
+              <iframe class="chart-iframe" 
+                      src="https://s.tradingview.com/widgetembed/?symbol=OANDA%3AXAUUSD&interval=D&theme=dark&style=1&locale=es&toolbar_bg=f1f3f6&allow_symbol_change=0&enable_publishing=0&hide_side_toolbar=0&save_image=0&studies=[]&show_popup_button=0&calendar=0&hide_volume=1&amp;no-cache" 
+                      frameborder="0" allowfullscreen>
+              </iframe>
+          </div>
+          
+      </div>
+      
+      <div class="notepad-panel">
+          <h2>Bloc de Notas</h2>
+          <textarea id="notepad" placeholder="Escribe tus notas aquí..."></textarea>
+      </div>
+      
     </main>
 
     <aside class="sidebar">
@@ -213,20 +352,118 @@
   </div>
 
   <script>
+    // --- Lógica JavaScript (Se mantiene igual) ---
+
+    // --- Calculadora ---
+    const display = document.getElementById('display');
+    let currentInput = '0';
+    let previousInput = '';
+    let operation = null;
+    let waitingForSecondOperand = false;
+
+    function updateDisplay() {
+        display.textContent = currentInput.length > 15 ? currentInput.slice(0, 15) : currentInput;
+    }
+
+    function appendNumber(number) {
+        if (waitingForSecondOperand) {
+            currentInput = number;
+            waitingForSecondOperand = false;
+        } else {
+            if (number === '.' && currentInput.includes('.')) return;
+            currentInput = currentInput === '0' && number !== '.' ? number : currentInput + number;
+        }
+        updateDisplay();
+    }
+
+    function appendOperator(nextOperation) {
+        const inputValue = parseFloat(currentInput);
+
+        if (operation && waitingForSecondOperand) {
+            operation = nextOperation;
+            return;
+        }
+
+        if (previousInput === '') {
+            previousInput = inputValue;
+        } else if (operation) {
+            const result = performCalculation[operation](previousInput, inputValue);
+            currentInput = String(result);
+            previousInput = result;
+        }
+
+        waitingForSecondOperand = true;
+        operation = nextOperation;
+        updateDisplay();
+    }
+
+    const performCalculation = {
+        '/': (first, second) => first / second,
+        '*': (first, second) => first * second,
+        '+': (first, second) => first + second,
+        '-': (first, second) => first - second,
+        '=': (first, second) => second 
+    };
+    
+    function calculate() {
+        if (!operation || waitingForSecondOperand) return;
+        
+        const secondOperand = parseFloat(currentInput);
+        
+        if (operation === '=') {
+             return;
+        }
+
+        const result = performCalculation[operation](previousInput, secondOperand);
+        currentInput = String(result);
+        operation = null;
+        previousInput = '';
+        waitingForSecondOperand = false;
+        updateDisplay();
+    }
+
+    function clearDisplay() {
+        currentInput = '0';
+        previousInput = '';
+        operation = null;
+        waitingForSecondOperand = false;
+        updateDisplay();
+    }
+    
+    function backspace() {
+        if (currentInput.length > 1 && !waitingForSecondOperand) {
+            currentInput = currentInput.slice(0, -1);
+        } else if (currentInput.length === 1 && !waitingForSecondOperand) {
+            currentInput = '0';
+        }
+        updateDisplay();
+    }
+    
+    updateDisplay(); 
+
+    // --- Bloc de Notas Lógica (Guardado local) ---
+    const notepad = document.getElementById('notepad');
+    const savedNotes = localStorage.getItem('danifu_notes');
+    if (savedNotes) {
+        notepad.value = savedNotes;
+    }
+
+    notepad.addEventListener('input', () => {
+        localStorage.setItem('danifu_notes', notepad.value);
+    });
+
     // 1. SCRIPT DE FECHA Y HORA
     function actualizarFechaHora() {
       const ahora = new Date();
       document.getElementById("fecha-hora").textContent =
         ahora.toLocaleDateString() + " " + ahora.toLocaleTimeString();
     }
-    // El reloj se actualiza cada 1 segundo (1000ms)
     setInterval(actualizarFechaHora, 1000);
     actualizarFechaHora();
 
-    // 2. SCRIPT DE DÓLAR BLUE (¡AHORA SE ACTUALIZA CADA 5 MINUTOS!)
+    // 2. SCRIPT DE DÓLAR BLUE (Actualización automática)
     async function obtenerDolarBlue() {
       const dolarElement = document.getElementById("dolar");
-      // Mecanismo anti-caché
       const antiCache = new Date().getTime(); 
       const url = `https://dolarapi.com/v1/dolares/blue?t=${antiCache}`;
       
@@ -234,11 +471,9 @@
       
       try {
         const response = await fetch(url);
-        
         if (!response.ok) {
           throw new Error(`Error HTTP: ${response.status}`);
         }
-        
         const data = await response.json();
         const precioVenta = data.venta; 
         
@@ -258,17 +493,12 @@
       }
     }
     
-    // 1. Llamar a la función inmediatamente al cargar la página
     obtenerDolarBlue(); 
-
-    // 2. Llamar a la función repetidamente (cada 5 minutos, o 300000 milisegundos)
-    // Esto asegura que el valor se actualice sin refrescar la página
-    setInterval(obtenerDolarBlue, 300000); 
+    setInterval(obtenerDolarBlue, 300000); // Actualiza cada 5 minutos (300000 ms)
 
 
-    // 3. SCRIPT DE REPRODUCTOR DE MÚSICA AVANZADO
+    // 3. SCRIPT DE REPRODUCTOR DE MÚSICA ALEATORIO
     
-    // Lista de tus canciones. Asegúrate de que los archivos estén en la carpeta 'YT/'
     const playlist = [
         { name: "Pista 1: Musica Animada", file: "(1).mp3" },
         { name: "Pista 2: Musica Animada", file: "(2).mp3" },
@@ -305,11 +535,27 @@
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     
-    let currentTrackIndex = 0;
-    const MUSIC_FOLDER = "YT/"; // RUTA DE TU CARPETA DE MÚSICA
+    let currentTrackIndex = -1; // -1 para indicar que no hay pista cargada al inicio
+    const MUSIC_FOLDER = "YT/"; 
+
+    function getRandomTrackIndex(excludeIndex) {
+        let newIndex;
+        // Genera un índice aleatorio que NO sea el excluido, si hay más de una pista
+        do {
+            newIndex = Math.floor(Math.random() * playlist.length);
+        } while (newIndex === excludeIndex && playlist.length > 1);
+        return newIndex;
+    }
 
     function loadTrack(index) {
-        currentTrackIndex = (index + playlist.length) % playlist.length;
+        if (index === 'random') {
+             index = getRandomTrackIndex(currentTrackIndex);
+        } else if (typeof index === 'number') {
+            // Asegura que el índice esté dentro del rango (manejo de ATRÁS secuencial)
+             index = (index + playlist.length) % playlist.length;
+        }
+        
+        currentTrackIndex = index;
         const track = playlist[currentTrackIndex];
         audioPlayer.src = MUSIC_FOLDER + track.file;
         songNameElement.textContent = track.name;
@@ -328,6 +574,10 @@
 
     function togglePlayPause() {
         if (audioPlayer.paused) {
+            // Si es la primera vez que se presiona Play, carga una pista aleatoria
+            if (currentTrackIndex === -1) {
+                loadTrack('random');
+            }
             audioPlayer.play().then(() => {
                 updatePlayPauseButton(true);
             }).catch(error => {
@@ -342,23 +592,30 @@
     
     playPauseBtn.addEventListener('click', togglePlayPause);
     
+    // Al presionar "Anterior" (ATRAS), va a la pista anterior secuencialmente
     prevBtn.addEventListener('click', () => {
-        loadTrack(currentTrackIndex - 1);
-        togglePlayPause(); 
+        // Si no hay pista cargada, carga la última. Si sí, va a la anterior.
+        let prevIndex = currentTrackIndex === -1 ? playlist.length - 1 : currentTrackIndex - 1;
+        loadTrack(prevIndex);
+        audioPlayer.play();
+        updatePlayPauseButton(true); 
     });
     
+    // Al presionar "Siguiente" (ADELANTE), va a una pista aleatoria
     nextBtn.addEventListener('click', () => {
-        loadTrack(currentTrackIndex + 1);
-        togglePlayPause(); 
+        loadTrack('random');
+        audioPlayer.play();
+        updatePlayPauseButton(true); 
     });
 
+    // Al finalizar una canción, reproduce la siguiente de forma aleatoria
     audioPlayer.addEventListener('ended', () => {
-        loadTrack(currentTrackIndex + 1);
+        loadTrack('random');
         audioPlayer.play(); 
     });
 
-    // Inicialización
-    loadTrack(currentTrackIndex);
+    // Muestra una canción al azar en la barra superior al cargar
+    songNameElement.textContent = playlist[getRandomTrackIndex(-1)].name;
     updatePlayPauseButton(false);
 
   </script>
