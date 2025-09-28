@@ -77,7 +77,7 @@
       
       /* CRÍTICO: Aseguramos que la altura total es el 100% del espacio restante. */
       height: calc(100vh - 52px); 
-      overflow-y: hidden; /* DESHABILITADO: El scroll ahora lo manejará el Notepad si es necesario */
+      overflow-y: hidden; 
       
       padding-right: calc(30% + 25px); 
     }
@@ -352,9 +352,9 @@
   </div>
 
   <script>
-    // --- Lógica JavaScript (Se mantiene igual) ---
-
-    // --- Calculadora ---
+    // --- Lógica JavaScript ---
+    
+    // --- Calculadora --- (Se mantiene igual)
     const display = document.getElementById('display');
     let currentInput = '0';
     let previousInput = '';
@@ -500,33 +500,9 @@
     // 3. SCRIPT DE REPRODUCTOR DE MÚSICA ALEATORIO
     
     const playlist = [
-        { name: "Pista 1: Musica Animada", file: "(1).mp3" },
-        { name: "Pista 2: Musica Animada", file: "(2).mp3" },
-        { name: "Pista 3: Musica Animada", file: "(3).mp3" },
-        { name: "Pista 4: Musica Animada", file: "(4).mp3" },
-        { name: "Pista 5: Musica Animada", file: "(5).mp3" },
-        { name: "Pista 6: Musica Animada", file: "(6).mp3" },
-        { name: "Pista 7: Musica Animada", file: "(7).mp3" },
-        { name: "Pista 8: Musica Animada", file: "(8).mp3" },
-        { name: "Pista 9: Musica Animada", file: "(9).mp3" },
-        { name: "Pista 10: Musica Animada", file: "(10).mp3" },
-        { name: "Pista 11: Musica Animada", file: "(11).mp3" },
-        { name: "Pista 12: Musica Animada", file: "(12).mp3" },
-        { name: "Pista 13: Musica Animada", file: "(13).mp3" },
-        { name: "Pista 14: Musica Animada", file: "(14).mp3" },
-        { name: "Pista 15: Musica Animada", file: "(15).mp3" },
-        { name: "Pista 16: Musica Animada", file: "(16).mp3" },
-        { name: "Pista 17: Musica Animada", file: "(17).mp3" },
-        { name: "Pista 18: Musica Animada", file: "(18).mp3" },
-        { name: "Pista 19: Musica Animada", file: "(19).mp3" },
-        { name: "Pista 20: Musica Animada", file: "(20).mp3" },
-        { name: "Pista 21: Musica Animada", file: "(21).mp3" },
-        { name: "Pista 22: Musica Animada", file: "(22).mp3" },
-        { name: "Pista 23: Musica Animada", file: "(23).mp3" },
-        { name: "Pista 24: Musica Animada", file: "(24).mp3" },
-        { name: "Pista 25: Musica Animada", file: "musica1.mp3" },
-        { name: "Pista 26: Canción de Prueba", file: "musica2.mp3" },
-        { name: "Pista 27: Final de Pista", file: "musica3.mp3" }
+        { name: "Pista 1: Musica Animada", file: "musica1.mp3" },
+        { name: "Pista 2: Canción de Prueba", file: "musica2.mp3" },
+        { name: "Pista 3: Final de Pista", file: "musica3.mp3" },
     ];
     
     const audioPlayer = document.getElementById('audioPlayer');
@@ -535,8 +511,9 @@
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     
-    let currentTrackIndex = -1; // -1 para indicar que no hay pista cargada al inicio
-    const MUSIC_FOLDER = "YT/"; 
+    let currentTrackIndex = -1; 
+    // SOLUCIÓN: Usar minúsculas en la ruta.
+    const MUSIC_FOLDER = "yt/"; 
 
     function getRandomTrackIndex(excludeIndex) {
         let newIndex;
