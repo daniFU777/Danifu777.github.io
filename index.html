@@ -325,28 +325,10 @@
       border-bottom: 1px solid var(--color-border);
       padding-bottom: 5px;
       font-size: 1.2em;
-      flex: 1;
-    }
-    #main-dashboard-view .symbol-selector {
-      background: var(--color-input-bg);
-      color: var(--color-text);
-      border: 1px solid var(--color-border);
-      padding: 5px 10px;
-      border-radius: 4px;
-      font-size: 0.85em;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    #main-dashboard-view .symbol-selector:hover {
-      background: #444;
-    }
-    #main-dashboard-view .symbol-selector:focus {
-      outline: none;
-      border-color: var(--color-highlight);
     }
     #main-dashboard-view .chart-iframe {
       width: 100%;
-      height: calc(100% - 40px);
+      height: calc(100% - 35px);
       border: none;
       display: block;
     }
@@ -1914,21 +1896,12 @@
       <main class="main">
         <div class="chart-panel">
           <div class="chart-header">
-            <h2>Mini-Grfico</h2>
-            <select class="symbol-selector" id="symbolSelect" onchange="changeSymbol()">
-              <option value="BINANCE:USDTARS">USDT/ARS</option>
-              <option value="FOREXCOM:XAUUSD">Oro (XAU/USD)</option>
-              <option value="FOREXCOM:EURUSD">EUR/USD</option>
-              <option value="FOREXCOM:GBPUSD">GBP/USD</option>
-              <option value="FOREXCOM:JPYUSD">JPY/USD</option>
-              <option value="BITSTAMP:BTCUSD">Bitcoin (BTC/USD)</option>
-              <option value="BITSTAMP:ETHUSD">Ethereum (ETH/USD)</option>
-              <option value="FOREXCOM:XAGUSD">Plata (XAG/USD)</option>
-              <option value="FOREXCOM:XAGUSD">Plata (XAG/USD)</option>
-              <option value="FOREXCOM:WTIUSD">Petrleo (WTI/USD)</option>
-              <option value="FOREXCOM:NGAS">Gas Natural</option>
-            </select>
+            <h2>Mini-Gráfico</h2>
           </div>
+          <iframe class="chart-iframe" id="tradingViewChart"
+            src="https://s.tradingview.com/widgetembed/?symbol=BINANCE%3AUSDTARS&interval=D&theme=dark&style=1&locale=es&toolbar_bg=f1f3f6&allow_symbol_change=1&enable_publishing=0&hide_side_toolbar=0&save_image=0&studies=[]&show_popup_button=0&calendar=0&hide_volume=1&amp;no-cache"
+            frameborder="0" allowfullscreen></iframe>
+        </div>
           <iframe class="chart-iframe" id="tradingViewChart"
             src="https://s.tradingview.com/widgetembed/?symbol=BINANCE%3AUSDTARS&interval=D&theme=dark&style=1&locale=es&toolbar_bg=f1f3f6&allow_symbol_change=0&enable_publishing=0&hide_side_toolbar=0&save_image=0&studies=[]&show_popup_button=0&calendar=0&hide_volume=1&amp;no-cache"
             frameborder="0" allowfullscreen></iframe>
@@ -2627,6 +2600,7 @@
         <button class="music-btn" id="prevBtn" title="Anterior"><i class="fa-solid fa-backward"></i></button>
         <button class="music-btn" id="playPauseBtn" title="Play/Pausa"><i class="fa-solid fa-play"></i></button>
         <button class="music-btn" id="nextBtn" title="Siguiente"><i class="fa-solid fa-forward"></i></button>
+        <button class="music-btn" id="repeatBtn" title="Sin repetición"><i class="fa-solid fa-repeat"></i></button>
       </div>
       
       <div class="progress-time">
@@ -3268,15 +3242,46 @@
       }
     }
 
+    var repeatMode = 0; // 0=off, 1=repeat all, 2=repeat one
+
     function onPlayerStateChange(event) {
       var playBtn = document.getElementById('playPauseBtn');
       if (event.data === YT.PlayerState.PLAYING) {
         if (playBtn) playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
         updateSongDisplay();
+      } else if (event.data === YT.PlayerState.ENDED) {
+        if (playBtn) playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+        if (repeatMode === 2 && window.player) {
+          window.player.seekTo(0);
+          window.player.playVideo();
+        }
       } else {
         if (playBtn) playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
       }
     }
+
+    window.setRepeatMode = function() {
+      repeatMode = (repeatMode + 1) % 3;
+      var btn = document.getElementById('repeatBtn');
+      if (!btn) return;
+      if (repeatMode === 0) {
+        btn.innerHTML = '<i class="fa-solid fa-repeat"></i>';
+        btn.title = 'Sin repetición';
+        btn.style.opacity = '0.4';
+        if (window.player && window.player.setLoop) window.player.setLoop(false);
+      } else if (repeatMode === 1) {
+        btn.innerHTML = '<i class="fa-solid fa-repeat"></i>';
+        btn.title = 'Repetir toda la lista';
+        btn.style.opacity = '1';
+        btn.style.color = '';
+        if (window.player && window.player.setLoop) window.player.setLoop(true);
+      } else {
+        btn.innerHTML = '<i class="fa-solid fa-repeat"></i><span style="font-size:8px;position:absolute;top:1px;right:1px;font-weight:700;">1</span>';
+        btn.title = 'Repetir canción';
+        btn.style.opacity = '1';
+        btn.style.color = '';
+      }
+    };
 
     function updateSongDisplay() {
       if (!window.player || !window.player.getVideoData) return;
@@ -3406,6 +3411,11 @@
 
       if (prevBtn) {
         prevBtn.addEventListener('click', window.prevVideo);
+      }
+
+      var repeatBtn = document.getElementById('repeatBtn');
+      if (repeatBtn) {
+        repeatBtn.addEventListener('click', window.setRepeatMode);
       }
 
       if (volumeSlider) {
@@ -3745,14 +3755,14 @@
     };
 
     // Grfico TradingView
-    window.changeSymbol = function () {
-      const select = document.getElementById('symbolSelect');
-      const symbol = select.value;
+    window.changeSymbol = function (symbol) {
+      if (!symbol) return;
       const iframe = document.getElementById('tradingViewChart');
+      if (!iframe) return;
       var view = document.getElementById('main-dashboard-view');
       var isLight = view && view.classList.contains('light-theme');
       var tvTheme = isLight ? 'light' : 'dark';
-      const newSrc = `https://s.tradingview.com/widgetembed/?symbol=${symbol}&interval=D&theme=${tvTheme}&style=1&locale=es&toolbar_bg=f1f3f6&allow_symbol_change=0&enable_publishing=0&hide_side_toolbar=0&save_image=0&studies=[]&show_popup_button=0&calendar=0&hide_volume=1&no-cache`;
+      const newSrc = `https://s.tradingview.com/widgetembed/?symbol=${symbol}&interval=D&theme=${tvTheme}&style=1&locale=es&toolbar_bg=f1f3f6&allow_symbol_change=1&enable_publishing=0&hide_side_toolbar=0&save_image=0&studies=[]&show_popup_button=0&calendar=0&hide_volume=1&no-cache`;
       iframe.src = newSrc;
       localStorage.setItem('danifu_chart_symbol', symbol);
     };
@@ -3988,8 +3998,8 @@
         window.setTheme(savedQuantisTheme, 'quantis-view');
       }
       const savedSymbol = localStorage.getItem('danifu_chart_symbol');
-      if (savedSymbol && document.getElementById('symbolSelect')) {
-        document.getElementById('symbolSelect').value = savedSymbol;
+      if (savedSymbol && typeof window.changeSymbol === 'function') {
+        window.changeSymbol(savedSymbol);
       }
       if (typeof window.updatePomoUI === 'function') {
         window.updatePomoUI();
