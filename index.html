@@ -4013,13 +4013,13 @@
     }
   </script>
   <!-- QUANTIS CANVAS ENGINE — Scoped to #quantis-view elements only -->
-  <script>
-  (function() {
-   // =========================================================
+<script>
+  (function () {
+    // =========================================================
     // --- QUANTIS INFINITE CANVAS ENGINE (BOUNDED, GRID, ZOOM-TO-MOUSE) ---
     // =========================================================
     var QS = {
-      lang: 'es',
+      lang: "es",
       zoom: 1.0,
       panX: 0,
       panY: 0,
@@ -4028,22 +4028,35 @@
       startY: 0,
       isDrawing: false,
       drawMode: null,
-      drawColor: '#000000',
+      drawColor: "#000000",
       drawSize: 8,
       activePath: null,
       ctxCoords: { x: 0, y: 0 },
       activeProj: 0,
       activePage: 0,
       projects: [
-        { id: 'qp-1', name: 'Proyecto Alpha', pages: ['Página Inicial', 'Investigación'] },
-        { id: 'qp-2', name: 'Proyecto Beta',  pages: ['Resumen'] }
+        {
+          id: "qp-1",
+          name: "Proyecto Alpha",
+          pages: ["Página Inicial", "Investigación"],
+        },
+        { id: "qp-2", name: "Proyecto Beta", pages: ["Resumen"] },
       ],
       canvasData: {
-        '0-0': [{ type:'text', x:3870, y:3870, desc:'Bienvenida', content:'Lienzo Infinito — Click para crear un bloque. Scroll para zoom. Arrastra para navegar. Clic derecho para insertar archivos.' }],
-        '0-1': [],
-        '1-0': []
+        "0-0": [
+          {
+            type: "text",
+            x: 3870,
+            y: 3870,
+            desc: "Bienvenida",
+            content:
+              "Lienzo Infinito — Click para crear un bloque. Scroll para zoom. Arrastra para navegar. Clic derecho para insertar archivos.",
+          },
+        ],
+        "0-1": [],
+        "1-0": [],
       },
-      drawings: {}
+      drawings: {},
     };
 
     // =========================================================
@@ -4052,60 +4065,56 @@
     var QD = {};
 
     function qInit() {
-      QD.viewport   = document.getElementById('quantis-viewport');
-      QD.canvas     = document.getElementById('quantis-canvas-container');
-      QD.drawSvg    = document.getElementById('quantis-drawing-svg');
-      // QD.drawCtx removed - SVG doesn't use canvas 2D context
-      QD.projList   = document.getElementById('q-projects-list');
-      QD.ctxMenu    = document.getElementById('q-context-menu');
-      QD.fileInput  = document.getElementById('q-file-input');
-      QD.clock      = document.getElementById('quantis-clock');
+      QD.viewport = document.getElementById("quantis-viewport");
+      QD.canvas = document.getElementById("quantis-canvas-container");
+      QD.drawSvg = document.getElementById("quantis-drawing-svg");
+      QD.projList = document.getElementById("q-projects-list");
+      QD.ctxMenu = document.getElementById("q-context-menu");
+      QD.fileInput = document.getElementById("q-file-input");
+      QD.clock = document.getElementById("quantis-clock");
 
-      if (!QD.viewport) return; // view not present
+      if (!QD.viewport) return;
 
-      // ===== QUANTIS VIEWPORT — ZOOM & SCROLL (corregido) =====
-      // Aislado al #quantis-viewport para no interferir con Dominon / Deep Flow.
+      // ===== QUANTIS VIEWPORT — ZOOM & SCROLL =====
       var quantisViewport = QD.viewport;
 
-      quantisViewport.addEventListener('wheel', function(e) {
-        // 1) Si el evento no nace dentro del viewport, dejamos que el
-        //    navegador haga scroll normal (no robamos el scroll global).
-        if (!(e.target === quantisViewport || quantisViewport.contains(e.target))) return;
-
-        // 2) Sólo ahora cancelamos el scroll nativo: el zoom lo maneja JS.
-        e.preventDefault();
-
-        var rect  = quantisViewport.getBoundingClientRect();
-        // 3) Coordenadas del mouse RELATIVAS A LA ESQUINA SUPERIOR IZQUIERDA
-        //    del viewport (coincide con transform-origin:0 0 del canvas).
-        var mouseX = e.clientX - rect.left;
-        var mouseY = e.clientY - rect.top;
-
-        var oldZoom = QS.zoom;
-
-        // 4) Intensidad proporcional al delta (funciona con mouse y trackpad).
-        //    CtrlKey = gesto de pinch-zoom en trackpad → zoom más fino.
-        var factor  = e.ctrlKey ? 0.01 : 0.0015;
-        var newZoom = oldZoom * (1 - e.deltaY * factor);
-
-        // 5) Limitamos el zoom según el tamaño del canvas y la vista.
-        var bounds    = qGetCanvasBounds();
-        var minZoom   = Math.max(0.2, quantisViewport.clientWidth  / bounds.size);
-        var minZoomY  = Math.max(0.2, quantisViewport.clientHeight / bounds.size);
-        minZoom = Math.max(minZoom, minZoomY);
-        var maxZoom   = 3.0;
-        QS.zoom = Math.max(minZoom, Math.min(maxZoom, newZoom));
-        if (QS.zoom === oldZoom) return; // no hay cambio → no movemos el pan
-
-        // 6) Zoom-to-mouse: el punto del canvas que estaba bajo el cursor
-        //    antes del zoom debe seguir estando bajo el cursor después.
-        var canvasX = (mouseX - QS.panX) / oldZoom;
-        var canvasY = (mouseY - QS.panY) / oldZoom;
-        QS.panX = mouseX - canvasX * QS.zoom;
-        QS.panY = mouseY - canvasY * QS.zoom;
-
-        qUpdateTransform();
-      }, { passive: false });
+      quantisViewport.addEventListener(
+        "wheel",
+        function (e) {
+          if (
+            !(
+              e.target === quantisViewport || quantisViewport.contains(e.target)
+            )
+          )
+            return;
+          e.preventDefault();
+          var rect = quantisViewport.getBoundingClientRect();
+          var mouseX = e.clientX - rect.left;
+          var mouseY = e.clientY - rect.top;
+          var oldZoom = QS.zoom;
+          var factor = e.ctrlKey ? 0.01 : 0.0015;
+          var newZoom = oldZoom * (1 - e.deltaY * factor);
+          var bounds = qGetCanvasBounds();
+          var minZoom = Math.max(
+            0.2,
+            quantisViewport.clientWidth / bounds.size,
+          );
+          var minZoomY = Math.max(
+            0.2,
+            quantisViewport.clientHeight / bounds.size,
+          );
+          minZoom = Math.max(minZoom, minZoomY);
+          var maxZoom = 3.0;
+          QS.zoom = Math.max(minZoom, Math.min(maxZoom, newZoom));
+          if (QS.zoom === oldZoom) return;
+          var canvasX = (mouseX - QS.panX) / oldZoom;
+          var canvasY = (mouseY - QS.panY) / oldZoom;
+          QS.panX = mouseX - canvasX * QS.zoom;
+          QS.panY = mouseY - canvasY * QS.zoom;
+          qUpdateTransform();
+        },
+        { passive: false },
+      );
 
       qLoadWorkspace();
       qApplyCanvasSize();
@@ -4115,6 +4124,7 @@
       qSetupWorkspaceButtons();
       qSetupDrawingControls();
       qSetupClock();
+      qSetupAutoSave();
       window.qUpdateDrawingControls();
     }
 
@@ -4123,33 +4133,64 @@
       function tick() {
         if (!QD.clock) return;
         var n = new Date();
-        var pad = function(v){ return String(v).padStart(2,'0'); };
-        QD.clock.textContent = pad(n.getHours())+':'+pad(n.getMinutes())+':'+pad(n.getSeconds());
+        var pad = function (v) {
+          return String(v).padStart(2, "0");
+        };
+        QD.clock.textContent =
+          pad(n.getHours()) +
+          ":" +
+          pad(n.getMinutes()) +
+          ":" +
+          pad(n.getSeconds());
       }
       tick();
       setInterval(tick, 1000);
     }
 
+    // ---- AUTO-SAVE ----
+    function qSetupAutoSave() {
+      // Guarda cada 30 segundos si Quantis está visible
+      setInterval(function () {
+        var view = document.getElementById("quantis-view");
+        if (view && !view.classList.contains("hidden-view")) {
+          qSavePage();
+        }
+      }, 30000);
+
+      // Guarda al cambiar de pestaña o minimizar ventana
+      document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState === "hidden") {
+          qSavePage();
+        }
+      });
+
+      // Guarda antes de cerrar el navegador
+      window.addEventListener("beforeunload", function () {
+        qSavePage();
+      });
+    }
+
     // ---- CANVAS TRANSFORM ----
     function qApplyCanvasSize() {
       if (!QD.canvas) return;
-      var limits = window.getPlanLimits ? window.getPlanLimits() : { quantisSize: 2000 };
+      var limits = window.getPlanLimits
+        ? window.getPlanLimits()
+        : { quantisSize: 2000 };
       var size = limits.quantisSize || 2000;
-      QD.canvas.style.width = size + 'px';
-      QD.canvas.style.height = size + 'px';
-      QD.canvas.style.left = '0px';
-      QD.canvas.style.top = '0px';
-      // SVG doesn't need width/height properties in the same way as canvas
-      // The SVG element already inherits size from its parent container
-      QD.drawSvg.setAttribute('viewBox', '0 0 ' + size + ' ' + size);
-      QD.drawSvg.style.width = size + 'px';
-      QD.drawSvg.style.height = size + 'px';
-      // Grid is now handled by the static CSS background on #quantis-viewport
+      QD.canvas.style.width = size + "px";
+      QD.canvas.style.height = size + "px";
+      QD.canvas.style.left = "0px";
+      QD.canvas.style.top = "0px";
+      QD.drawSvg.setAttribute("viewBox", "0 0 " + size + " " + size);
+      QD.drawSvg.style.width = size + "px";
+      QD.drawSvg.style.height = size + "px";
       qRedrawCanvas();
     }
 
     function qGetCanvasBounds() {
-      var limits = window.getPlanLimits ? window.getPlanLimits() : { quantisSize: 2000 };
+      var limits = window.getPlanLimits
+        ? window.getPlanLimits()
+        : { quantisSize: 2000 };
       var size = limits.quantisSize || 2000;
       var half = size / 2;
       return { size: size, half: half };
@@ -4165,8 +4206,18 @@
 
     function qGetZoomConstraints() {
       var bounds = qGetCanvasBounds();
-      var minZoom = Math.max(0.35, Math.max(QD.viewport.clientWidth / bounds.size, QD.viewport.clientHeight / bounds.size));
-      var maxZoom = Math.min(3.0, bounds.size / Math.min(QD.viewport.clientWidth, QD.viewport.clientHeight));
+      var minZoom = Math.max(
+        0.35,
+        Math.max(
+          QD.viewport.clientWidth / bounds.size,
+          QD.viewport.clientHeight / bounds.size,
+        ),
+      );
+      var maxZoom = Math.min(
+        3.0,
+        bounds.size /
+          Math.min(QD.viewport.clientWidth, QD.viewport.clientHeight),
+      );
       return { min: minZoom, max: maxZoom };
     }
 
@@ -4177,19 +4228,32 @@
 
     function qUpdateTransform() {
       qClampPan();
-      QD.canvas.style.transform = 'translate3d('+QS.panX+'px,'+QS.panY+'px,0) scale('+QS.zoom+')';
+      QD.canvas.style.transform =
+        "translate3d(" +
+        QS.panX +
+        "px," +
+        QS.panY +
+        "px,0) scale(" +
+        QS.zoom +
+        ")";
     }
 
     // =========================================================
     // --- QUANTIS LOCAL STORAGE ENGINE ---
     // =========================================================
-    function qWorkspaceKey() {
-      return QS.activeProj + '-' + QS.activePage;
+    function quantisStorageKey() {
+      return "quantis_local_data";
+    }
+
+    function qCurrentUid() {
+      return window.auth && window.auth.currentUser
+        ? window.auth.currentUser.uid
+        : "guest";
     }
 
     function qNormalizeDrawingPaths(key) {
       if (!Array.isArray(QS.drawings[key])) QS.drawings[key] = [];
-      QS.drawings[key] = QS.drawings[key].filter(function(path) {
+      QS.drawings[key] = QS.drawings[key].filter(function (path) {
         return path && Array.isArray(path.points) && path.points.length > 0;
       });
       return QS.drawings[key];
@@ -4197,60 +4261,79 @@
 
     function qCreateSvgPath(points, size, color, mode) {
       if (!points || points.length < 2) return null;
-      var d = 'M ' + points[0].x + ',' + points[0].y;
+      var d = "M " + points[0].x + "," + points[0].y;
       if (points.length === 1) {
-        d += ' L ' + (points[0].x + 0.01) + ',' + (points[0].y + 0.01);
+        d += " L " + (points[0].x + 0.01) + "," + (points[0].y + 0.01);
       } else {
         for (var i = 1; i < points.length; i++) {
-          d += ' L ' + points[i].x + ',' + points[i].y;
+          d += " L " + points[i].x + "," + points[i].y;
         }
       }
-      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      path.setAttribute('d', d);
-      path.setAttribute('stroke-width', size || 8);
-      path.setAttribute('stroke', color || '#000000');
-      path.setAttribute('fill', 'none');
-      path.setAttribute('stroke-linecap', 'round');
-      path.setAttribute('stroke-linejoin', 'round');
-      if (mode === 'eraser') {
-        path.setAttribute('vector-effect', 'non-scaling-stroke');
-        path.style.mixBlendMode = 'difference';
+      var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", d);
+      path.setAttribute("stroke-width", size || 8);
+      path.setAttribute("stroke", color || "#000000");
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke-linecap", "round");
+      path.setAttribute("stroke-linejoin", "round");
+      if (mode === "eraser") {
+        path.setAttribute("vector-effect", "non-scaling-stroke");
+        path.style.mixBlendMode = "difference";
       }
       return path;
     }
 
     function qCreateSvgCircle(cx, cy, r, size, color) {
-      var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      circle.setAttribute('cx', cx);
-      circle.setAttribute('cy', cy);
-      circle.setAttribute('r', r);
-      circle.setAttribute('stroke-width', size || 8);
-      circle.setAttribute('stroke', color || '#000000');
-      circle.setAttribute('fill', 'none');
-      circle.setAttribute('stroke-linecap', 'round');
-      circle.setAttribute('stroke-linejoin', 'round');
+      var circle = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "circle",
+      );
+      circle.setAttribute("cx", cx);
+      circle.setAttribute("cy", cy);
+      circle.setAttribute("r", r);
+      circle.setAttribute("stroke-width", size || 8);
+      circle.setAttribute("stroke", color || "#000000");
+      circle.setAttribute("fill", "none");
+      circle.setAttribute("stroke-linecap", "round");
+      circle.setAttribute("stroke-linejoin", "round");
       return circle;
     }
 
     function qStrokeVectorPath(path) {
-      if (!QD.drawSvg || !path || !Array.isArray(path.points) || !path.points.length) return;
+      if (
+        !QD.drawSvg ||
+        !path ||
+        !Array.isArray(path.points) ||
+        !path.points.length
+      )
+        return;
       var svgElement;
-      if (path.mode === 'circle' && path.points.length >= 2) {
-        var cx = path.points[0].x, cy = path.points[0].y;
-        var px = path.points[1].x, py = path.points[1].y;
+      if (path.mode === "circle" && path.points.length >= 2) {
+        var cx = path.points[0].x,
+          cy = path.points[0].y;
+        var px = path.points[1].x,
+          py = path.points[1].y;
         var r = Math.hypot(px - cx, py - cy);
         svgElement = qCreateSvgCircle(cx, cy, r, path.size, path.color);
       } else {
-        svgElement = qCreateSvgPath(path.points, path.size, path.color, path.mode);
+        svgElement = qCreateSvgPath(
+          path.points,
+          path.size,
+          path.color,
+          path.mode,
+        );
       }
       if (svgElement) {
         QD.drawSvg.appendChild(svgElement);
       }
     }
 
+    function qWorkspaceKey() {
+      return QS.activeProj + "-" + QS.activePage;
+    }
+
     function qRedrawCanvas() {
       if (!QD.drawSvg) return;
-      // Remove existing SVG elements inside QD.drawSvg
       while (QD.drawSvg.firstChild) {
         QD.drawSvg.removeChild(QD.drawSvg.firstChild);
       }
@@ -4259,7 +4342,12 @@
 
     function qStrokeLiveSegment(path, fromPoint, toPoint) {
       if (!QD.drawSvg || !path || !fromPoint || !toPoint) return;
-      var svgElement = qCreateSvgPath([fromPoint, toPoint], path.size, path.color, path.mode);
+      var svgElement = qCreateSvgPath(
+        [fromPoint, toPoint],
+        path.size,
+        path.color,
+        path.mode,
+      );
       if (svgElement) {
         QD.drawSvg.appendChild(svgElement);
       }
@@ -4274,99 +4362,149 @@
     }
 
     function qSaveWorkspace() {
-      qSavePage(false);
+      qSavePage();
       qPersistWorkspace();
     }
 
-    function quantisStorageKey() {
-      var uid = window.auth && window.auth.currentUser ? window.auth.currentUser.uid : 'guest';
-      return 'quantis_local_data_' + uid;
-    }
-
+    // =========================================================
+    // FIX: qPersistWorkspace — guarda siempre, sin chequeo de UID
+    // =========================================================
     function qPersistWorkspace() {
       try {
-        localStorage.setItem(quantisStorageKey(), JSON.stringify({
-          projects: QS.projects,
-          canvasData: QS.canvasData,
-          drawings: QS.drawings,
-          activeProj: QS.activeProj,
-          activePage: QS.activePage
-        }));
+        localStorage.setItem(
+          quantisStorageKey(),
+          JSON.stringify({
+            uid: qCurrentUid(),
+            projects: QS.projects,
+            canvasData: QS.canvasData,
+            drawings: QS.drawings,
+            activeProj: QS.activeProj,
+            activePage: QS.activePage,
+          }),
+        );
       } catch (error) {
-        console.warn('No se pudo guardar Quantis localmente:', error);
+        console.warn("No se pudo guardar Quantis localmente:", error);
       }
     }
 
+    // =========================================================
+    // FIX: qLoadWorkspace — eliminado el bloqueo por UID
+    // El UID mismatch causaba que nunca se cargara el workspace
+    // al arrancar (Firebase auth aún no resuelto → uid='guest')
+    // =========================================================
     function qLoadWorkspace() {
       try {
         var raw = localStorage.getItem(quantisStorageKey());
-        // Migration: si no hay datos con el key nuevo pero sí con el viejo, migrarlos
-        if (!raw) {
-          var oldRaw = localStorage.getItem('quantis_local_data');
-          if (oldRaw) {
-            localStorage.setItem(quantisStorageKey(), oldRaw);
-            localStorage.removeItem('quantis_local_data');
-            raw = oldRaw;
-          }
-        }
         if (!raw) return;
         var data = JSON.parse(raw);
-        if (Array.isArray(data.projects)) QS.projects = data.projects;
-        if (data.canvasData && typeof data.canvasData === 'object') QS.canvasData = data.canvasData;
-        if (data.drawings && typeof data.drawings === 'object') QS.drawings = data.drawings;
+        // ELIMINADO: if (data.uid && data.uid !== qCurrentUid()) return;
+        // Esa comprobación bloqueaba la carga porque auth no estaba
+        // resuelto todavía cuando se llamaba qInit().
+        if (Array.isArray(data.projects) && data.projects.length)
+          QS.projects = data.projects;
+        if (data.canvasData && typeof data.canvasData === "object")
+          QS.canvasData = data.canvasData;
+        if (data.drawings && typeof data.drawings === "object")
+          QS.drawings = data.drawings;
         QS.activeProj = Number.isInteger(data.activeProj) ? data.activeProj : 0;
         QS.activePage = Number.isInteger(data.activePage) ? data.activePage : 0;
+        // Seguridad: asegurarse de que los índices siguen siendo válidos
+        QS.activeProj = Math.min(
+          QS.activeProj,
+          Math.max(0, QS.projects.length - 1),
+        );
+        QS.activePage = Math.min(
+          QS.activePage,
+          Math.max(
+            0,
+            QS.projects[QS.activeProj]
+              ? QS.projects[QS.activeProj].pages.length - 1
+              : 0,
+          ),
+        );
       } catch (error) {
-        console.warn('No se pudo cargar Quantis local:', error);
+        console.warn("No se pudo cargar Quantis local:", error);
       }
     }
 
+    // Expuesto globalmente para que el handler de auth pueda
+    // recargar el workspace cuando el usuario se autentica.
+    window.qReloadWorkspace = function () {
+      qSavePage();
+      qLoadWorkspace();
+      qApplyCanvasSize();
+      qRenderProjects();
+      qLoadPage(QS.activeProj, QS.activePage, true);
+    };
+
+    // =========================================================
+    // FIX: qSavePage — guarda el canvas actual en memoria y localStorage
+    // =========================================================
     function qSavePage() {
       if (!QD.canvas) return;
-      var key = QS.activeProj+'-'+QS.activePage;
+      var key = QS.activeProj + "-" + QS.activePage;
       var els = [];
-      QD.canvas.querySelectorAll('.q-canvas-el').forEach(function(blk) {
+      QD.canvas.querySelectorAll(".q-canvas-el").forEach(function (blk) {
         var x = parseFloat(blk.style.left);
         var y = parseFloat(blk.style.top);
         var w = blk.style.width ? parseFloat(blk.style.width) : null;
         var h = blk.style.height ? parseFloat(blk.style.height) : null;
-        var desc = blk.querySelector('.q-block-desc').value;
-        var textNode = blk.querySelector('.q-block-text');
+        var descEl = blk.querySelector(".q-block-desc");
+        var desc = descEl ? descEl.value : "";
+        var textNode = blk.querySelector(".q-block-text");
         if (textNode) {
-          els.push({ type:'text', x:x, y:y, desc:desc, content:textNode.innerText,
-                     isLink: textNode.getAttribute('data-is-link')==='true' });
+          els.push({
+            type: "text",
+            x: x,
+            y: y,
+            desc: desc,
+            content: textNode.innerText,
+            isLink: textNode.getAttribute("data-is-link") === "true",
+          });
         } else {
-          var imgEl = blk.querySelector('.q-file-img');
-          var lbl   = blk.querySelector('.q-file-label');
-          els.push({ type:'file', x:x, y:y, w:w, h:h, desc:desc,
-                     fileName: lbl ? lbl.textContent : '',
-                     fileType: blk.getAttribute('data-ftype') || 'unknown',
-                     fileData: imgEl ? imgEl.src : null });
+          var imgEl = blk.querySelector(".q-file-img");
+          var lbl = blk.querySelector(".q-file-label");
+          els.push({
+            type: "file",
+            x: x,
+            y: y,
+            w: w,
+            h: h,
+            desc: desc,
+            fileName: lbl ? lbl.textContent : "",
+            fileType: blk.getAttribute("data-ftype") || "unknown",
+            fileData: imgEl ? imgEl.src : null,
+          });
         }
       });
       QS.canvasData[key] = els;
       qSaveDrawing();
-      try {
-        localStorage.setItem('quantis_local_data', JSON.stringify({
-          projects: QS.projects,
-          canvasData: QS.canvasData,
-          drawings: QS.drawings,
-          activeProj: QS.activeProj,
-          activePage: QS.activePage
-        }));
-      } catch (error) {}
+      qPersistWorkspace();
     }
 
     function qLoadPage(projIdx, pageIdx, skipCurrentSave) {
       if (!skipCurrentSave) qSavePage();
-      QS.activeProj  = projIdx;
-      QS.activePage  = pageIdx;
-      QD.canvas.querySelectorAll('.q-canvas-el').forEach(function(el) { el.remove(); });
-      var key  = projIdx+'-'+pageIdx;
+      QS.activeProj = projIdx;
+      QS.activePage = pageIdx;
+      QD.canvas.querySelectorAll(".q-canvas-el").forEach(function (el) {
+        el.remove();
+      });
+      var key = projIdx + "-" + pageIdx;
       var data = QS.canvasData[key] || [];
-      data.forEach(function(el) {
-        if (el.type === 'text') qRecreateText(el.x, el.y, el.desc, el.content, el.isLink);
-        else                    qRecreateFile(el.x, el.y, el.desc, el.fileName, el.fileType, el.fileData, el.w, el.h);
+      data.forEach(function (el) {
+        if (el.type === "text")
+          qRecreateText(el.x, el.y, el.desc, el.content, el.isLink);
+        else
+          qRecreateFile(
+            el.x,
+            el.y,
+            el.desc,
+            el.fileName,
+            el.fileType,
+            el.fileData,
+            el.w,
+            el.h,
+          );
       });
       qLoadDrawing();
       qRenderProjects();
@@ -4376,32 +4514,105 @@
     // ---- PROJECTS SIDEBAR ----
     function qRenderProjects() {
       if (!QD.projList) return;
-      QD.projList.innerHTML = '';
-      QS.projects.forEach(function(proj, pi) {
-        var wrap = document.createElement('div');
-        wrap.className = 'q-proj-item';
-        var lbl = document.createElement('div');
-        lbl.className = 'q-proj-label';
-        lbl.innerHTML = '<span><i class="fa-solid fa-folder"></i>'+proj.name+'</span>';
-        var addPageBtn = document.createElement('button');
-        addPageBtn.style.cssText = 'background:none;border:none;color:var(--quantis-faint);cursor:pointer;font-size:10px;';
+      QD.projList.innerHTML = "";
+      QS.projects.forEach(function (proj, pi) {
+        var wrap = document.createElement("div");
+        wrap.className = "q-proj-item";
+
+        var lbl = document.createElement("div");
+        lbl.className = "q-proj-label";
+
+        // Nombre del proyecto (click para renombrar)
+        var nameSpan = document.createElement("span");
+        nameSpan.innerHTML = '<i class="fa-solid fa-folder"></i>' + proj.name;
+        nameSpan.style.cursor = "pointer";
+        nameSpan.style.flex = "1";
+        nameSpan.onclick = function () {
+          var n = prompt("Renombrar proyecto:", proj.name);
+          if (n && n.trim()) {
+            proj.name = n.trim();
+            qRenderProjects();
+            qSaveWorkspace();
+          }
+        };
+        lbl.appendChild(nameSpan);
+
+        // Botón: agregar página
+        var addPageBtn = document.createElement("button");
+        addPageBtn.style.cssText =
+          "background:none;border:none;color:var(--quantis-faint);cursor:pointer;font-size:10px;padding:2px 4px;";
         addPageBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
-        addPageBtn.title = 'Nueva Página';
-        addPageBtn.onclick = function(e){ e.stopPropagation(); qAddPage(pi); };
+        addPageBtn.title = "Nueva Página";
+        addPageBtn.onclick = function (e) {
+          e.stopPropagation();
+          qAddPage(pi);
+        };
         lbl.appendChild(addPageBtn);
-        lbl.querySelector('span').onclick = function(){ var n=prompt('Renombrar proyecto:',proj.name); if(n&&n.trim()){proj.name=n.trim();qRenderProjects();qSaveWorkspace();} };
+
+        // FIX: Botón para eliminar proyecto
+        var delProjBtn = document.createElement("button");
+        delProjBtn.style.cssText =
+          "background:none;border:none;color:#ef4444;cursor:pointer;font-size:10px;padding:2px 4px;opacity:0.7;";
+        delProjBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+        delProjBtn.title = "Eliminar Proyecto";
+        delProjBtn.onclick = function (e) {
+          e.stopPropagation();
+          qDeleteProject(pi);
+        };
+        lbl.appendChild(delProjBtn);
+
         wrap.appendChild(lbl);
-        var ul = document.createElement('div');
-        ul.className = 'q-page-list';
-        proj.pages.forEach(function(page, gi) {
-          var li = document.createElement('div');
-          li.className = 'q-page-item' + (QS.activeProj===pi && QS.activePage===gi ? ' active' : '');
-          li.innerHTML = '<span><i class="fa-solid fa-file-lines"></i>'+page+'</span>';
-          li.onclick = function(){ qLoadPage(pi, gi); };
-          var del = document.createElement('button');
-          del.className = 'q-page-del';
+
+        var ul = document.createElement("div");
+        ul.className = "q-page-list";
+        proj.pages.forEach(function (page, gi) {
+          var li = document.createElement("div");
+          li.className =
+            "q-page-item" +
+            (QS.activeProj === pi && QS.activePage === gi ? " active" : "");
+          li.innerHTML =
+            '<span><i class="fa-solid fa-file-lines"></i>' + page + "</span>";
+          li.onclick = function () {
+            qLoadPage(pi, gi);
+          };
+
+          var del = document.createElement("button");
+          del.className = "q-page-del";
           del.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
-          del.onclick = function(e){ e.stopPropagation(); if(confirm('¿Eliminar esta página?')){ proj.pages.splice(gi,1); delete QS.canvasData[pi+'-'+gi]; delete QS.drawings[pi+'-'+gi]; if(QS.activeProj===pi&&QS.activePage===gi) qLoadPage(0,0); else { qRenderProjects(); qSaveWorkspace(); } } };
+          // FIX: reindexar claves de páginas al eliminar
+          del.onclick = function (e) {
+            e.stopPropagation();
+            if (!confirm("¿Eliminar esta página?")) return;
+            // Guardar estado actual antes de borrar
+            qSavePage();
+            // Reindexar canvasData y drawings para las páginas posteriores
+            var totalPages = proj.pages.length;
+            for (var k = gi + 1; k < totalPages; k++) {
+              QS.canvasData[pi + "-" + (k - 1)] =
+                QS.canvasData[pi + "-" + k] || [];
+              QS.drawings[pi + "-" + (k - 1)] = QS.drawings[pi + "-" + k] || [];
+              delete QS.canvasData[pi + "-" + k];
+              delete QS.drawings[pi + "-" + k];
+            }
+            // Eliminar la última (que ya fue movida un lugar antes)
+            delete QS.canvasData[pi + "-" + (totalPages - 1)];
+            delete QS.drawings[pi + "-" + (totalPages - 1)];
+            proj.pages.splice(gi, 1);
+            // Si la página eliminada era la activa o anterior, ajustar
+            var newPage = QS.activePage;
+            if (QS.activeProj === pi) {
+              if (QS.activePage === gi) {
+                newPage = Math.max(0, gi - 1);
+              } else if (QS.activePage > gi) {
+                newPage = QS.activePage - 1;
+              }
+            }
+            if (!proj.pages.length) proj.pages.push("Página 1");
+            var newProj = QS.activeProj;
+            newPage = Math.min(newPage, proj.pages.length - 1);
+            qLoadPage(newProj, newPage, true);
+            qSaveWorkspace();
+          };
           li.appendChild(del);
           ul.appendChild(li);
         });
@@ -4410,57 +4621,138 @@
       });
     }
 
-    window.qAddProject = function() {
+    window.qAddProject = function () {
       if (!window.isMembershipPlanReady) {
-        window.showPlanPopup('Cargando tu plan. Intentalo de nuevo en un momento.');
+        window.showPlanPopup(
+          "Cargando tu plan. Intentalo de nuevo en un momento.",
+        );
         return;
       }
-      var limits = window.getPlanLimits ? window.getPlanLimits() : { maxQuantisProjects: 2 };
+      var limits = window.getPlanLimits
+        ? window.getPlanLimits()
+        : { maxQuantisProjects: 2 };
       if (QS.projects.length >= limits.maxQuantisProjects) {
-        window.showPlanPopup('Limite de proyectos alcanzado para tu plan.');
+        window.showPlanPopup("Limite de proyectos alcanzado para tu plan.");
         return;
       }
-      var n = prompt('Nombre del nuevo proyecto:');
+      var n = prompt("Nombre del nuevo proyecto:");
       if (n && n.trim()) {
-        QS.projects.push({ id:'qp-'+Date.now(), name:n.trim(), pages:['Pagina 1'] });
-        QS.canvasData[(QS.projects.length - 1)+'-0'] = [];
+        var newIdx = QS.projects.length;
+        QS.projects.push({
+          id: "qp-" + Date.now(),
+          name: n.trim(),
+          pages: ["Pagina 1"],
+        });
+        QS.canvasData[newIdx + "-0"] = [];
+        QS.drawings[newIdx + "-0"] = [];
         qRenderProjects();
         qSaveWorkspace();
       }
     };
 
+    // FIX: qDeleteProject — elimina proyecto y reindexea claves de proyectos posteriores
+    function qDeleteProject(pi) {
+      if (QS.projects.length <= 1) {
+        alert("No puedes eliminar el único proyecto.");
+        return;
+      }
+      if (
+        !confirm(
+          '¿Eliminar proyecto "' +
+            QS.projects[pi].name +
+            '" y todas sus páginas?',
+        )
+      )
+        return;
+      qSavePage();
+
+      // Eliminar datos de todas las páginas de este proyecto
+      var proj = QS.projects[pi];
+      proj.pages.forEach(function (_, gi) {
+        delete QS.canvasData[pi + "-" + gi];
+        delete QS.drawings[pi + "-" + gi];
+      });
+
+      // Reindexar proyectos posteriores
+      for (var i = pi + 1; i < QS.projects.length; i++) {
+        QS.projects[i].pages.forEach(function (_, gi) {
+          QS.canvasData[i - 1 + "-" + gi] = QS.canvasData[i + "-" + gi] || [];
+          QS.drawings[i - 1 + "-" + gi] = QS.drawings[i + "-" + gi] || [];
+          delete QS.canvasData[i + "-" + gi];
+          delete QS.drawings[i + "-" + gi];
+        });
+      }
+
+      QS.projects.splice(pi, 1);
+
+      // Ajustar proyecto activo
+      var newProj = Math.min(QS.activeProj, QS.projects.length - 1);
+      if (newProj < 0) newProj = 0;
+      var newPage = 0;
+      if (!QS.projects.length) {
+        QS.projects = [
+          { id: "qp-" + Date.now(), name: "Proyecto 1", pages: ["Pagina 1"] },
+        ];
+        QS.canvasData["0-0"] = [];
+        QS.drawings["0-0"] = [];
+      }
+      qLoadPage(newProj, newPage, true);
+      qSaveWorkspace();
+    }
+
     function qAddPage(projIdx) {
       if (!window.isMembershipPlanReady) {
-        window.showPlanPopup('Cargando tu plan. Intentalo de nuevo en un momento.');
+        window.showPlanPopup(
+          "Cargando tu plan. Intentalo de nuevo en un momento.",
+        );
         return;
       }
-      var limits = window.getPlanLimits ? window.getPlanLimits() : { maxQuantisPagesPerProj: 3 };
+      var limits = window.getPlanLimits
+        ? window.getPlanLimits()
+        : { maxQuantisPagesPerProj: 3 };
       if (QS.projects[projIdx].pages.length >= limits.maxQuantisPagesPerProj) {
-        window.showPlanPopup('Limite de paginas por proyecto alcanzado para tu plan.');
+        window.showPlanPopup(
+          "Limite de paginas por proyecto alcanzado para tu plan.",
+        );
         return;
       }
-      var n = prompt('Nombre de la nueva página:');
+      var n = prompt("Nombre de la nueva página:");
       if (n && n.trim()) {
         QS.projects[projIdx].pages.push(n.trim());
         var newIdx = QS.projects[projIdx].pages.length - 1;
-        QS.canvasData[projIdx+'-'+newIdx] = [];
+        QS.canvasData[projIdx + "-" + newIdx] = [];
+        QS.drawings[projIdx + "-" + newIdx] = [];
         qLoadPage(projIdx, newIdx);
       }
     }
 
-    window.qApplyPlanLimits = function() {
+    window.qApplyPlanLimits = function () {
       qApplyCanvasSize();
       var prevProj = QS.activeProj;
       var prevPage = QS.activePage;
       if (!QS.projects.length) {
-        QS.projects = [{ id: 'qp-' + Date.now(), name: 'Proyecto 1', pages: ['Pagina 1'] }];
-        QS.canvasData['0-0'] = QS.canvasData['0-0'] || [];
+        QS.projects = [
+          { id: "qp-" + Date.now(), name: "Proyecto 1", pages: ["Pagina 1"] },
+        ];
+        QS.canvasData["0-0"] = QS.canvasData["0-0"] || [];
+        QS.drawings["0-0"] = QS.drawings["0-0"] || [];
       }
-      QS.projects.forEach(function(project) {
-        if (!project.pages.length) project.pages.push('Pagina 1');
+      QS.projects.forEach(function (project) {
+        if (!project.pages.length) project.pages.push("Pagina 1");
       });
-      QS.activeProj = Math.min(QS.activeProj, Math.max(0, QS.projects.length - 1));
-      QS.activePage = Math.min(QS.activePage, Math.max(0, (QS.projects[QS.activeProj]?.pages.length || 1) - 1));
+      QS.activeProj = Math.min(
+        QS.activeProj,
+        Math.max(0, QS.projects.length - 1),
+      );
+      QS.activePage = Math.min(
+        QS.activePage,
+        Math.max(
+          0,
+          QS.projects[QS.activeProj]
+            ? QS.projects[QS.activeProj].pages.length - 1
+            : 0,
+        ),
+      );
       if (prevProj !== QS.activeProj || prevPage !== QS.activePage) {
         qLoadPage(QS.activeProj, QS.activePage, true);
       } else {
@@ -4469,106 +4761,128 @@
     };
 
     function qSetupWorkspaceButtons() {
-      document.getElementById('q-center-canvas-btn')?.addEventListener('click', function() {
-        var bounds = qGetCanvasBounds();
-        var rect = QD.viewport.getBoundingClientRect();
-        QS.panX = (rect.width - bounds.size * QS.zoom) / 2;
-        QS.panY = (rect.height - bounds.size * QS.zoom) / 2;
-        QS.zoom = 1.0;
-        qUpdateTransform();
-      });
-      document.getElementById('q-export-project-btn')?.addEventListener('click', function() {
-        if (!window.isMembershipPlanReady) return window.showPlanPopup('Cargando tu plan. Intentalo de nuevo en un momento.');
-        if (window.userPlan === 'normal') return window.showPlanPopup('Export Project requiere Extended o Premium.');
-        qSaveWorkspace();
-        var blob = new Blob([localStorage.getItem(quantisStorageKey()) || '{}'], { type: 'application/json;charset=utf-8' });
-        var a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'quantis_workspace.json';
-        a.click();
-        URL.revokeObjectURL(a.href);
-      });
-      document.getElementById('q-import-project-btn')?.addEventListener('click', function() {
-        if (!window.isMembershipPlanReady) return window.showPlanPopup('Cargando tu plan. Intentalo de nuevo en un momento.');
-        if (window.userPlan === 'normal') return window.showPlanPopup('Import Project requiere Extended o Premium.');
-        document.getElementById('q-import-project-input')?.click();
-      });
-      document.getElementById('q-import-project-input')?.addEventListener('change', function(e) {
-        var file = e.target.files[0];
-        if (!file) return;
-        var reader = new FileReader();
-        reader.onload = function(ev) {
-          try {
-            var data = JSON.parse(ev.target.result);
-            if (!Array.isArray(data.projects) || !data.canvasData) throw new Error('Formato invalido');
-            QS.projects = data.projects;
-            QS.canvasData = data.canvasData || {};
-            QS.drawings = data.drawings || {};
-            QS.activeProj = 0;
-            QS.activePage = 0;
-            qLoadPage(0, 0, true);
-          } catch (error) {
-            window.showPlanPopup('Archivo Quantis invalido.');
-          }
-        };
-        reader.readAsText(file);
-        e.target.value = '';
-      });
+      document
+        .getElementById("q-center-canvas-btn")
+        ?.addEventListener("click", function () {
+          var bounds = qGetCanvasBounds();
+          var rect = QD.viewport.getBoundingClientRect();
+          QS.panX = (rect.width - bounds.size * QS.zoom) / 2;
+          QS.panY = (rect.height - bounds.size * QS.zoom) / 2;
+          QS.zoom = 1.0;
+          qUpdateTransform();
+        });
+      document
+        .getElementById("q-export-project-btn")
+        ?.addEventListener("click", function () {
+          if (!window.isMembershipPlanReady)
+            return window.showPlanPopup(
+              "Cargando tu plan. Intentalo de nuevo en un momento.",
+            );
+          if (window.userPlan === "normal")
+            return window.showPlanPopup(
+              "Export Project requiere Extended o Premium.",
+            );
+          qSaveWorkspace();
+          var blob = new Blob(
+            [localStorage.getItem(quantisStorageKey()) || "{}"],
+            { type: "application/json;charset=utf-8" },
+          );
+          var a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = "quantis_workspace.json";
+          a.click();
+          URL.revokeObjectURL(a.href);
+        });
+      document
+        .getElementById("q-import-project-btn")
+        ?.addEventListener("click", function () {
+          if (!window.isMembershipPlanReady)
+            return window.showPlanPopup(
+              "Cargando tu plan. Intentalo de nuevo en un momento.",
+            );
+          if (window.userPlan === "normal")
+            return window.showPlanPopup(
+              "Import Project requiere Extended o Premium.",
+            );
+          document.getElementById("q-import-project-input")?.click();
+        });
+      document
+        .getElementById("q-import-project-input")
+        ?.addEventListener("change", function (e) {
+          var file = e.target.files[0];
+          if (!file) return;
+          var reader = new FileReader();
+          reader.onload = function (ev) {
+            try {
+              var data = JSON.parse(ev.target.result);
+              if (!Array.isArray(data.projects) || !data.canvasData)
+                throw new Error("Formato invalido");
+              QS.projects = data.projects;
+              QS.canvasData = data.canvasData || {};
+              QS.drawings = data.drawings || {};
+              QS.activeProj = 0;
+              QS.activePage = 0;
+              qLoadPage(0, 0, true);
+              qSaveWorkspace();
+            } catch (error) {
+              window.showPlanPopup("Archivo Quantis invalido.");
+            }
+          };
+          reader.readAsText(file);
+          e.target.value = "";
+        });
     }
 
     // ---- CANVAS EVENTS ----
     function qSetupCanvas() {
-      var clickT = 0, clickX = 0, clickY = 0, isMouseDragging = false;
-      // Pan start + click tracking
-      QD.viewport.addEventListener('mousedown', function(e) {
+      var clickT = 0,
+        clickX = 0,
+        clickY = 0,
+        isMouseDragging = false;
+      QD.viewport.addEventListener("mousedown", function (e) {
         if (e.button === 0) {
           if (QS.drawMode) {
-            // Left-click with drawing mode - start drawing
             qBeginDraw(e);
           } else {
-            // Left-click without drawing mode - start panning
             if (e.target === QD.viewport || e.target === QD.canvas) {
               QS.isPanning = true;
               QS.startX = e.clientX - QS.panX;
               QS.startY = e.clientY - QS.panY;
-              QD.viewport.classList.add('grabbing');
-              QD.ctxMenu.style.display = 'none';
-              clickT = Date.now(); clickX = e.clientX; clickY = e.clientY;
+              QD.viewport.classList.add("grabbing");
+              QD.ctxMenu.style.display = "none";
+              clickT = Date.now();
+              clickX = e.clientX;
+              clickY = e.clientY;
               isMouseDragging = false;
             }
           }
         } else if (e.button === 2) {
-          // Right-click - always pan, never show context menu
           if (e.target === QD.viewport || e.target === QD.canvas) {
             QS.isPanning = true;
             QS.startX = e.clientX - QS.panX;
             QS.startY = e.clientY - QS.panY;
-            QD.viewport.classList.add('grabbing');
-            QD.ctxMenu.style.display = 'none';
+            QD.viewport.classList.add("grabbing");
+            QD.ctxMenu.style.display = "none";
             isMouseDragging = false;
           }
         }
       });
-       window.addEventListener('mousemove', function(e) {
-         if (QS.isPanning) {
-           var dist = Math.hypot(e.clientX - clickX, e.clientY - clickY);
-           if (dist > 5) {
-             isMouseDragging = true;
-           }
-           QS.panX = e.clientX - QS.startX;
-           QS.panY = e.clientY - QS.startY;
-           qUpdateTransform();
-         }
-       });
-       
-       window.addEventListener('mouseup', function() {
-         if (QS.isPanning) {
-           QS.isPanning = false;
-           QD.viewport.classList.remove('grabbing');
-         }
-       });
-       // Click to create text
-      QD.viewport.addEventListener('mouseup', function(e) {
+      window.addEventListener("mousemove", function (e) {
+        if (QS.isPanning) {
+          var dist = Math.hypot(e.clientX - clickX, e.clientY - clickY);
+          if (dist > 5) isMouseDragging = true;
+          QS.panX = e.clientX - QS.startX;
+          QS.panY = e.clientY - QS.startY;
+          qUpdateTransform();
+        }
+      });
+      window.addEventListener("mouseup", function () {
+        if (QS.isPanning) {
+          QS.isPanning = false;
+          QD.viewport.classList.remove("grabbing");
+        }
+      });
+      QD.viewport.addEventListener("mouseup", function (e) {
         if (QS.drawMode) return;
         if (e.target === QD.viewport || e.target === QD.canvas) {
           if (e.button === 0) {
@@ -4577,9 +4891,9 @@
             if (diff < 250 && dist < 5) {
               var rect = QD.canvas.getBoundingClientRect();
               var x = (e.clientX - rect.left) / QS.zoom;
-              var y = (e.clientY - rect.top)  / QS.zoom;
+              var y = (e.clientY - rect.top) / QS.zoom;
               if (!qIsWithinBounds(x, y)) {
-                window.showPlanPopup('Fuera de los límites del canvas.');
+                window.showPlanPopup("Fuera de los límites del canvas.");
                 return;
               }
               qCreateText(x, y);
@@ -4587,80 +4901,89 @@
           }
         }
       });
-       // Right-click context menu (only if not dragging)
-       QD.viewport.addEventListener('contextmenu', function(e) {
-         if (isMouseDragging) {
-           e.preventDefault();
-           return;
-         }
-         e.preventDefault();
-         var rect = QD.canvas.getBoundingClientRect();
-         var cx = (e.clientX - rect.left) / QS.zoom;
-         var cy = (e.clientY - rect.top)  / QS.zoom;
-         if (!qIsWithinBounds(cx, cy)) {
-           window.showPlanPopup('Fuera de los límites del canvas.');
-           return;
-         }
-         QS.ctxCoords.x = cx;
-         QS.ctxCoords.y = cy;
-         QD.ctxMenu.style.display = 'block';
-         QD.ctxMenu.style.left = e.clientX + 'px';
-         QD.ctxMenu.style.top  = e.clientY + 'px';
-       });
-       document.addEventListener('click', function(e) {
-         if (!QD.ctxMenu.contains(e.target) && !isMouseDragging) QD.ctxMenu.style.display = 'none';
-       });
+      QD.viewport.addEventListener("contextmenu", function (e) {
+        if (isMouseDragging) {
+          e.preventDefault();
+          return;
+        }
+        e.preventDefault();
+        var rect = QD.canvas.getBoundingClientRect();
+        var cx = (e.clientX - rect.left) / QS.zoom;
+        var cy = (e.clientY - rect.top) / QS.zoom;
+        if (!qIsWithinBounds(cx, cy)) {
+          window.showPlanPopup("Fuera de los límites del canvas.");
+          return;
+        }
+        QS.ctxCoords.x = cx;
+        QS.ctxCoords.y = cy;
+        QD.ctxMenu.style.display = "block";
+        QD.ctxMenu.style.left = e.clientX + "px";
+        QD.ctxMenu.style.top = e.clientY + "px";
+      });
+      document.addEventListener("click", function (e) {
+        if (!QD.ctxMenu.contains(e.target) && !isMouseDragging)
+          QD.ctxMenu.style.display = "none";
+      });
     }
 
     // =========================================================
     // --- QUANTIS DRAWING CONTROLS ---
     // =========================================================
     function qIsPremiumBrush() {
-      return !!(window.isMembershipPlanReady && window.getPlanLimits && window.getPlanLimits().hasBrush);
+      return !!(
+        window.isMembershipPlanReady &&
+        window.getPlanLimits &&
+        window.getPlanLimits().hasBrush
+      );
     }
 
     function qCanvasPoint(e) {
       var rect = QD.canvas.getBoundingClientRect();
       return {
         x: (e.clientX - rect.left) / QS.zoom,
-        y: (e.clientY - rect.top) / QS.zoom
+        y: (e.clientY - rect.top) / QS.zoom,
       };
     }
 
     function qBeginDraw(e) {
       if (!QS.drawMode) return;
       if (!window.isMembershipPlanReady) {
-        window.showPlanPopup('Cargando tu plan. Intentalo de nuevo en un momento.');
+        window.showPlanPopup(
+          "Cargando tu plan. Intentalo de nuevo en un momento.",
+        );
         return;
       }
       if (!qIsPremiumBrush()) {
         QS.drawMode = null;
         window.qUpdateDrawingControls();
-        window.showPlanPopup('Drawing Tools son exclusivos de Premium.');
+        window.showPlanPopup("Drawing Tools son exclusivos de Premium.");
         return;
       }
       if (!(e.target === QD.viewport || e.target === QD.canvas)) return;
       e.preventDefault();
       var p = qCanvasPoint(e);
       if (!qIsWithinBounds(p.x, p.y)) {
-        window.showPlanPopup('Fuera de los límites del canvas.');
+        window.showPlanPopup("Fuera de los límites del canvas.");
         return;
       }
       QS.isDrawing = true;
-      if (QS.drawMode === 'line' || QS.drawMode === 'circle') {
+      if (QS.drawMode === "line" || QS.drawMode === "circle") {
         QS.activePath = {
           mode: QS.drawMode,
           color: QS.drawColor,
           size: QS.drawSize,
-          points: [{ x: p.x, y: p.y }, { x: p.x, y: p.y }],
-          origin: { x: p.x, y: p.y }
+          points: [
+            { x: p.x, y: p.y },
+            { x: p.x, y: p.y },
+          ],
+          origin: { x: p.x, y: p.y },
         };
       } else {
         QS.activePath = {
           mode: QS.drawMode,
           color: QS.drawColor,
           size: QS.drawSize,
-          points: [{ x: p.x, y: p.y }]
+          points: [{ x: p.x, y: p.y }],
         };
         qNormalizeDrawingPaths(qWorkspaceKey()).push(QS.activePath);
         qStrokeVectorPath(QS.activePath);
@@ -4671,13 +4994,13 @@
       if (!QS.isDrawing || !QS.drawMode || !QS.activePath) return;
       e.preventDefault();
       var p = qCanvasPoint(e);
-      if (QS.drawMode === 'line') {
+      if (QS.drawMode === "line") {
         QS.activePath.points[1] = { x: p.x, y: p.y };
         qRedrawCanvas();
         qStrokeVectorPath(QS.activePath);
         return;
       }
-      if (QS.drawMode === 'circle') {
+      if (QS.drawMode === "circle") {
         QS.activePath.points[1] = { x: p.x, y: p.y };
         qRedrawCanvas();
         qStrokeVectorPath(QS.activePath);
@@ -4685,7 +5008,8 @@
       }
       var points = QS.activePath.points;
       var lastPoint = points[points.length - 1];
-      if (lastPoint && Math.hypot(p.x - lastPoint.x, p.y - lastPoint.y) < 0.75) return;
+      if (lastPoint && Math.hypot(p.x - lastPoint.x, p.y - lastPoint.y) < 0.75)
+        return;
       points.push({ x: p.x, y: p.y });
       qStrokeLiveSegment(QS.activePath, lastPoint, p);
     }
@@ -4693,7 +5017,10 @@
     function qEndDraw() {
       if (!QS.isDrawing) return;
       QS.isDrawing = false;
-      if (QS.activePath && (QS.activePath.mode === 'line' || QS.activePath.mode === 'circle')) {
+      if (
+        QS.activePath &&
+        (QS.activePath.mode === "line" || QS.activePath.mode === "circle")
+      ) {
         qNormalizeDrawingPaths(qWorkspaceKey()).push(QS.activePath);
         qRedrawCanvas();
       }
@@ -4703,307 +5030,441 @@
 
     function qSetDrawMode(mode) {
       if (!window.isMembershipPlanReady) {
-        window.showPlanPopup('Cargando tu plan. Intentalo de nuevo en un momento.');
+        window.showPlanPopup(
+          "Cargando tu plan. Intentalo de nuevo en un momento.",
+        );
         return;
       }
       if (!qIsPremiumBrush()) {
-        window.showPlanPopup('Drawing Tools son exclusivos de Premium.');
+        window.showPlanPopup("Drawing Tools son exclusivos de Premium.");
         return;
       }
       QS.drawMode = QS.drawMode === mode ? null : mode;
       window.qUpdateDrawingControls();
-      // Auto-open drawing tools panel when a mode is selected
       if (QS.drawMode) {
-        var panel = document.getElementById('quantis-drawing-tools-panel');
-        if (panel) panel.classList.add('open');
+        var panel = document.getElementById("quantis-drawing-tools-panel");
+        if (panel) panel.classList.add("open");
       }
     }
 
     function qToggleDrawPanel() {
       if (!window.isMembershipPlanReady) {
-        window.showPlanPopup('Cargando tu plan. Intentalo de nuevo en un momento.');
+        window.showPlanPopup(
+          "Cargando tu plan. Intentalo de nuevo en un momento.",
+        );
         return;
       }
       if (!qIsPremiumBrush()) {
-        window.showPlanPopup('Drawing Tools son exclusivos de Premium.');
+        window.showPlanPopup("Drawing Tools son exclusivos de Premium.");
         return;
       }
-      var panel = document.getElementById('quantis-drawing-tools-panel');
-      if (panel) panel.classList.toggle('open');
+      var panel = document.getElementById("quantis-drawing-tools-panel");
+      if (panel) panel.classList.toggle("open");
     }
 
     function qCloseDrawPanel() {
-      var panel = document.getElementById('quantis-drawing-tools-panel');
-      if (panel) panel.classList.remove('open');
+      var panel = document.getElementById("quantis-drawing-tools-panel");
+      if (panel) panel.classList.remove("open");
     }
 
-        // Expose drawing controls globally for inline onclick handlers (e.g., context menu)
     window.qSetDrawMode = qSetDrawMode;
     window.qToggleDrawPanel = qToggleDrawPanel;
     window.qCloseDrawPanel = qCloseDrawPanel;
 
-    // ===== Selección rápida de color desde el menú contextual =====
-    // Elige color y activa automáticamente el modo pincel.
-    window.qSelectDrawColor = function(color) {
+    window.qSelectDrawColor = function (color) {
       if (!window.isMembershipPlanReady) {
-        window.showPlanPopup('Cargando tu plan. Intentalo de nuevo en un momento.');
+        window.showPlanPopup(
+          "Cargando tu plan. Intentalo de nuevo en un momento.",
+        );
         return;
       }
       if (!qIsPremiumBrush()) {
-        window.showPlanPopup('Drawing Tools son exclusivos de Premium.');
+        window.showPlanPopup("Drawing Tools son exclusivos de Premium.");
         return;
       }
       QS.drawColor = color;
-      QS.drawMode = 'pencil';
-
-      // Sincroniza los botones de color del panel flotante
-      document.getElementById('q-draw-cblack')?.classList.toggle('active', color === '#000000');
-      document.getElementById('q-draw-cwhite')?.classList.toggle('active', color === '#ffffff');
-
-      // Refresca estado de los botones de herramienta y abre el panel
+      QS.drawMode = "pencil";
+      document
+        .getElementById("q-draw-cblack")
+        ?.classList.toggle("active", color === "#000000");
+      document
+        .getElementById("q-draw-cwhite")
+        ?.classList.toggle("active", color === "#ffffff");
       window.qUpdateDrawingControls();
-      var panel = document.getElementById('quantis-drawing-tools-panel');
-      if (panel) panel.classList.add('open');
-
-      // Cierra el menú contextual
-      if (QD.ctxMenu) QD.ctxMenu.style.display = 'none';
+      var panel = document.getElementById("quantis-drawing-tools-panel");
+      if (panel) panel.classList.add("open");
+      if (QD.ctxMenu) QD.ctxMenu.style.display = "none";
     };
 
-    // ===== Vuelve a modo navegar/arrastrar sin pintar =====
-    window.qSetFreeMode = function() {
+    window.qSetFreeMode = function () {
       QS.drawMode = null;
       window.qUpdateDrawingControls();
-      var panel = document.getElementById('quantis-drawing-tools-panel');
-      if (panel) panel.classList.remove('open');
-      if (QD.ctxMenu) QD.ctxMenu.style.display = 'none';
+      var panel = document.getElementById("quantis-drawing-tools-panel");
+      if (panel) panel.classList.remove("open");
+      if (QD.ctxMenu) QD.ctxMenu.style.display = "none";
     };
 
     function qSetupDrawingControls() {
       if (!QD.viewport) return;
-      QD.viewport.addEventListener('mousedown', qBeginDraw);
-      window.addEventListener('mousemove', qMoveDraw);
-      window.addEventListener('mouseup', qEndDraw);
+      QD.viewport.addEventListener("mousedown", qBeginDraw);
+      window.addEventListener("mousemove", qMoveDraw);
+      window.addEventListener("mouseup", qEndDraw);
 
-      // Close button inside panel
-      document.getElementById('q-draw-close')?.addEventListener('click', qCloseDrawPanel);
+      document
+        .getElementById("q-draw-close")
+        ?.addEventListener("click", qCloseDrawPanel);
+      document
+        .getElementById("q-draw-pencil")
+        ?.addEventListener("click", function () {
+          qSetDrawMode("pencil");
+        });
+      document
+        .getElementById("q-draw-eraser")
+        ?.addEventListener("click", function () {
+          qSetDrawMode("eraser");
+        });
+      document
+        .getElementById("q-draw-line")
+        ?.addEventListener("click", function () {
+          qSetDrawMode("line");
+        });
+      document
+        .getElementById("q-draw-circle")
+        ?.addEventListener("click", function () {
+          qSetDrawMode("circle");
+        });
 
-      // Panel tool buttons
-      document.getElementById('q-draw-pencil')?.addEventListener('click', function(){ qSetDrawMode('pencil'); });
-      document.getElementById('q-draw-eraser')?.addEventListener('click', function(){ qSetDrawMode('eraser'); });
-      document.getElementById('q-draw-line')?.addEventListener('click', function(){ qSetDrawMode('line'); });
-      document.getElementById('q-draw-circle')?.addEventListener('click', function(){ qSetDrawMode('circle'); });
+      document
+        .getElementById("q-draw-thickness")
+        ?.addEventListener("input", function (e) {
+          if (!window.isMembershipPlanReady)
+            return window.showPlanPopup(
+              "Cargando tu plan. Intentalo de nuevo en un momento.",
+            );
+          if (!qIsPremiumBrush())
+            return window.showPlanPopup(
+              "Drawing Tools son exclusivos de Premium.",
+            );
+          QS.drawSize = parseInt(e.target.value, 10) || 8;
+        });
 
-      // Panel brush size
-      document.getElementById('q-draw-thickness')?.addEventListener('input', function(e) {
-        if (!window.isMembershipPlanReady) return window.showPlanPopup('Cargando tu plan. Intentalo de nuevo en un momento.');
-        if (!qIsPremiumBrush()) return window.showPlanPopup('Drawing Tools son exclusivos de Premium.');
-        QS.drawSize = parseInt(e.target.value, 10) || 8;
-      });
+      document
+        .getElementById("q-draw-cblack")
+        ?.addEventListener("click", function () {
+          if (!window.isMembershipPlanReady)
+            return window.showPlanPopup(
+              "Cargando tu plan. Intentalo de nuevo en un momento.",
+            );
+          if (!qIsPremiumBrush())
+            return window.showPlanPopup(
+              "Drawing Tools son exclusivos de Premium.",
+            );
+          QS.drawColor = "#000000";
+          document.getElementById("q-draw-cblack")?.classList.add("active");
+          document.getElementById("q-draw-cwhite")?.classList.remove("active");
+        });
+      document
+        .getElementById("q-draw-cwhite")
+        ?.addEventListener("click", function () {
+          if (!window.isMembershipPlanReady)
+            return window.showPlanPopup(
+              "Cargando tu plan. Intentalo de nuevo en un momento.",
+            );
+          if (!qIsPremiumBrush())
+            return window.showPlanPopup(
+              "Drawing Tools son exclusivos de Premium.",
+            );
+          QS.drawColor = "#ffffff";
+          document.getElementById("q-draw-cwhite")?.classList.add("active");
+          document.getElementById("q-draw-cblack")?.classList.remove("active");
+        });
 
-      // Panel color toggles
-      document.getElementById('q-draw-cblack')?.addEventListener('click', function() {
-        if (!window.isMembershipPlanReady) return window.showPlanPopup('Cargando tu plan. Intentalo de nuevo en un momento.');
-        if (!qIsPremiumBrush()) return window.showPlanPopup('Drawing Tools son exclusivos de Premium.');
-        QS.drawColor = '#000000';
-        document.getElementById('q-draw-cblack')?.classList.add('active');
-        document.getElementById('q-draw-cwhite')?.classList.remove('active');
-      });
-      document.getElementById('q-draw-cwhite')?.addEventListener('click', function() {
-        if (!window.isMembershipPlanReady) return window.showPlanPopup('Cargando tu plan. Intentalo de nuevo en un momento.');
-        if (!qIsPremiumBrush()) return window.showPlanPopup('Drawing Tools son exclusivos de Premium.');
-        QS.drawColor = '#ffffff';
-        document.getElementById('q-draw-cwhite')?.classList.add('active');
-        document.getElementById('q-draw-cblack')?.classList.remove('active');
-      });
-
-      // Panel drag
-      var panel = document.getElementById('quantis-drawing-tools-panel');
-      var panelHeader = panel ? panel.querySelector('.q-draw-header') : null;
+      var panel = document.getElementById("quantis-drawing-tools-panel");
+      var panelHeader = panel ? panel.querySelector(".q-draw-header") : null;
       if (panel && panelHeader) {
-        var pDrag = false, pSX, pSY, pLX, pLY;
-        panelHeader.addEventListener('mousedown', function(e) {
-          if (e.target.closest('button')) return;
+        var pDrag = false,
+          pSX,
+          pSY,
+          pLX,
+          pLY;
+        panelHeader.addEventListener("mousedown", function (e) {
+          if (e.target.closest("button")) return;
           pDrag = true;
-          pSX = e.clientX; pSY = e.clientY;
-          pLX = panel.offsetLeft; pLY = panel.offsetTop;
+          pSX = e.clientX;
+          pSY = e.clientY;
+          pLX = panel.offsetLeft;
+          pLY = panel.offsetTop;
           e.preventDefault();
         });
-        document.addEventListener('mousemove', function(e) {
+        document.addEventListener("mousemove", function (e) {
           if (!pDrag) return;
-          panel.style.left = (pLX + e.clientX - pSX) + 'px';
-          panel.style.top = (pLY + e.clientY - pSY) + 'px';
+          panel.style.left = pLX + e.clientX - pSX + "px";
+          panel.style.top = pLY + e.clientY - pSY + "px";
         });
-        document.addEventListener('mouseup', function() { pDrag = false; });
+        document.addEventListener("mouseup", function () {
+          pDrag = false;
+        });
       }
 
-      // Close panel on click outside
-      document.addEventListener('click', function(e) {
-        var panel = document.getElementById('quantis-drawing-tools-panel');
-        if (!panel || !panel.classList.contains('open')) return;
-        if (!panel.contains(e.target)) {
-          panel.classList.remove('open');
-        }
+      document.addEventListener("click", function (e) {
+        var panel = document.getElementById("quantis-drawing-tools-panel");
+        if (!panel || !panel.classList.contains("open")) return;
+        if (!panel.contains(e.target)) panel.classList.remove("open");
       });
     }
 
-    window.qUpdateDrawingControls = function() {
+    window.qUpdateDrawingControls = function () {
       if (!window.isMembershipPlanReady) return;
       var hasBrush = qIsPremiumBrush();
-      document.querySelectorAll('.q-draw-tool').forEach(function(el) {
-        el.style.opacity = hasBrush ? '1' : '0.58';
-        el.title = hasBrush ? (el.title || '') : 'Premium only';
+      document.querySelectorAll(".q-draw-tool").forEach(function (el) {
+        el.style.opacity = hasBrush ? "1" : "0.58";
+        el.title = hasBrush ? el.title || "" : "Premium only";
       });
-      document.getElementById('q-draw-pencil')?.classList.toggle('active', QS.drawMode === 'pencil');
-      document.getElementById('q-draw-eraser')?.classList.toggle('active', QS.drawMode === 'eraser');
-      document.getElementById('q-draw-line')?.classList.toggle('active', QS.drawMode === 'line');
-      document.getElementById('q-draw-circle')?.classList.toggle('active', QS.drawMode === 'circle');
-      if (!hasBrush) { QS.drawMode = null; qCloseDrawPanel(); }
+      document
+        .getElementById("q-draw-pencil")
+        ?.classList.toggle("active", QS.drawMode === "pencil");
+      document
+        .getElementById("q-draw-eraser")
+        ?.classList.toggle("active", QS.drawMode === "eraser");
+      document
+        .getElementById("q-draw-line")
+        ?.classList.toggle("active", QS.drawMode === "line");
+      document
+        .getElementById("q-draw-circle")
+        ?.classList.toggle("active", QS.drawMode === "circle");
+      if (!hasBrush) {
+        QS.drawMode = null;
+        qCloseDrawPanel();
+      }
     };
 
     // =========================================================
     // --- QUANTIS BLOCK FACTORY ---
     // =========================================================
     function qMakeBlock(x, y, descVal) {
-      var blk = document.createElement('div');
-      blk.className = 'q-canvas-el';
-      blk.style.left = x + 'px';
-      blk.style.top  = y + 'px';
+      var blk = document.createElement("div");
+      blk.className = "q-canvas-el";
+      blk.style.left = x + "px";
+      blk.style.top = y + "px";
 
-      var desc = document.createElement('input');
-      desc.type = 'text';
-      desc.className = 'q-block-desc';
-      desc.value = descVal || '';
-      desc.placeholder = 'Añadir descripción...';
-      desc.addEventListener('blur', qSavePage);
+      var desc = document.createElement("input");
+      desc.type = "text";
+      desc.className = "q-block-desc";
+      desc.value = descVal || "";
+      desc.placeholder = "Añadir descripción...";
+      // Guarda al salir del campo de descripción
+      desc.addEventListener("blur", qSavePage);
+      // También guarda al escribir (debounced)
+      var _descTimer;
+      desc.addEventListener("input", function () {
+        clearTimeout(_descTimer);
+        _descTimer = setTimeout(qSavePage, 800);
+      });
       blk.appendChild(desc);
 
-      var del = document.createElement('button');
-      del.className = 'q-block-del';
+      var del = document.createElement("button");
+      del.className = "q-block-del";
       del.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-      del.onclick = function(){ blk.remove(); qSavePage(); };
+      del.onclick = function () {
+        blk.remove();
+        qSavePage();
+      };
       blk.appendChild(del);
 
       // Drag
-      blk.addEventListener('mousedown', function(e) {
-        if (e.target.closest('input') || e.target.closest('a') || e.target.isContentEditable || e.target.closest('.q-block-del')) return;
+      blk.addEventListener("mousedown", function (e) {
+        if (
+          e.target.closest("input") ||
+          e.target.closest("a") ||
+          e.target.isContentEditable ||
+          e.target.closest(".q-block-del")
+        )
+          return;
         e.stopPropagation();
         var prevZ = blk.style.zIndex;
-        blk.style.zIndex = '40';
-        var sx = e.clientX, sy = e.clientY;
-        var onMove = function(me) {
+        blk.style.zIndex = "40";
+        var sx = e.clientX,
+          sy = e.clientY;
+        var onMove = function (me) {
           var dx = (me.clientX - sx) / QS.zoom;
           var dy = (me.clientY - sy) / QS.zoom;
-          blk.style.left = (parseFloat(blk.style.left) + dx) + 'px';
-          blk.style.top  = (parseFloat(blk.style.top)  + dy) + 'px';
-          sx = me.clientX; sy = me.clientY;
+          blk.style.left = parseFloat(blk.style.left) + dx + "px";
+          blk.style.top = parseFloat(blk.style.top) + dy + "px";
+          sx = me.clientX;
+          sy = me.clientY;
         };
-        var onUp = function() {
+        var onUp = function () {
           blk.style.zIndex = prevZ;
-          document.removeEventListener('mousemove', onMove);
-          document.removeEventListener('mouseup', onUp);
+          document.removeEventListener("mousemove", onMove);
+          document.removeEventListener("mouseup", onUp);
           qSavePage();
         };
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup', onUp);
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
       });
 
       return blk;
     }
 
     function qCreateText(x, y) {
-      qRecreateText(x, y, '', 'Escribe algo aquí...', false);
+      qRecreateText(x, y, "", "Escribe algo aquí...", false);
       qSavePage();
     }
 
+    // =========================================================
+    // FIX: qRecreateText — eliminado { once: true } del blur.
+    // Se usa un handler reutilizable con activateEditing() para
+    // evitar acumulación de listeners al doble-clic sobre links.
+    // También añadido listener de 'input' con debounce para
+    // guardar mientras el usuario escribe, sin esperar al blur.
+    // =========================================================
     function qRecreateText(x, y, desc, content, isLink) {
       var blk = qMakeBlock(x, y, desc);
-      blk.style.width = '240px';
-      var textNode = document.createElement('div');
-      textNode.className = 'q-block-text';
+      blk.style.width = "240px";
+      var textNode = document.createElement("div");
+      textNode.className = "q-block-text";
+
+      var _inputTimer;
+
+      // Handler de input: guarda con debounce mientras el usuario escribe
+      function onInput() {
+        clearTimeout(_inputTimer);
+        _inputTimer = setTimeout(qSavePage, 800);
+      }
+
+      // Handler de blur: detecta URL y guarda
+      function onBlur() {
+        var t = textNode.innerText.trim();
+        if (qIsURL(t)) {
+          qMakeLink(textNode, t, activateEditing);
+        } else {
+          qSavePage();
+        }
+      }
+
+      // Activa el modo edición en el textNode y registra listeners
+      function activateEditing() {
+        textNode.contentEditable = "true";
+        textNode.setAttribute("data-is-link", "false");
+        // Remover antes de añadir para evitar duplicados
+        textNode.removeEventListener("blur", onBlur);
+        textNode.addEventListener("blur", onBlur);
+        textNode.removeEventListener("input", onInput);
+        textNode.addEventListener("input", onInput);
+      }
 
       if (isLink) {
-        qMakeLink(textNode, content);
+        qMakeLink(textNode, content, activateEditing);
       } else {
-        textNode.setAttribute('data-is-link', 'false');
-        textNode.contentEditable = 'true';
+        activateEditing();
         textNode.innerText = content;
-        textNode.addEventListener('blur', function() {
-          var t = textNode.innerText.trim();
-          if (qIsURL(t)) qMakeLink(textNode, t);
-          qSavePage();
-        }, { once: true });
       }
+
       blk.appendChild(textNode);
       QD.canvas.appendChild(blk);
-      if (content === 'Escribe algo aquí...') { textNode.focus(); document.execCommand('selectAll',false,null); }
+      if (content === "Escribe algo aquí...") {
+        textNode.focus();
+        document.execCommand("selectAll", false, null);
+      }
     }
 
-    function qMakeLink(textNode, url) {
-      textNode.contentEditable = 'false';
-      textNode.setAttribute('data-is-link', 'true');
-      textNode.className = 'q-block-text';
-      textNode.innerHTML = '';
-      var a = document.createElement('a');
-      a.href = qFmtURL(url); a.target = '_blank'; a.textContent = url;
-      a.addEventListener('mousedown', function(e){ e.stopPropagation(); });
-      textNode.appendChild(a);
-      textNode.addEventListener('dblclick', function(e) {
+    // =========================================================
+    // FIX: qMakeLink — ahora recibe onEdit callback para
+    // reconectar listeners correctamente al doble-clic,
+    // sin acumular handlers ni usar { once: true }.
+    // =========================================================
+    function qMakeLink(textNode, url, onEdit) {
+      textNode.contentEditable = "false";
+      textNode.setAttribute("data-is-link", "true");
+      textNode.className = "q-block-text";
+      textNode.innerHTML = "";
+
+      var a = document.createElement("a");
+      a.href = qFmtURL(url);
+      a.target = "_blank";
+      a.textContent = url;
+      a.addEventListener("mousedown", function (e) {
         e.stopPropagation();
-        textNode.contentEditable = 'true';
-        textNode.setAttribute('data-is-link','false');
-        textNode.className = 'q-block-text';
-        textNode.innerText = url;
-        textNode.focus();
-        textNode.addEventListener('blur', function() {
-          var t = textNode.innerText.trim();
-          if (qIsURL(t)) qMakeLink(textNode, t);
-          qSavePage();
-        }, { once: true });
       });
+      textNode.appendChild(a);
+
+      // Doble clic: volver al modo edición
+      function onDblClick(e) {
+        textNode.removeEventListener("dblclick", onDblClick);
+        e.stopPropagation();
+        textNode.className = "q-block-text";
+        textNode.innerText = url;
+        if (typeof onEdit === "function") onEdit();
+        textNode.focus();
+      }
+      textNode.addEventListener("dblclick", onDblClick);
+
+      // Guardar el hecho de que es un link
+      qSavePage();
     }
 
     function qRecreateFile(x, y, desc, fileName, fileType, fileData, w, h) {
       var blk = qMakeBlock(x, y, desc);
-      blk.setAttribute('data-ftype', fileType || 'unknown');
-      if (w) blk.style.width  = w + 'px';
-      if (h) blk.style.height = h + 'px';
+      blk.setAttribute("data-ftype", fileType || "unknown");
+      if (w) blk.style.width = w + "px";
+      if (h) blk.style.height = h + "px";
 
-      var box = document.createElement('div');
-      box.style.cssText = 'flex:1;width:100%;min-height:80px;border:1px solid rgba(168,85,247,0.15);border-radius:3px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--quantis-bg);position:relative;';
+      var box = document.createElement("div");
+      box.style.cssText =
+        "flex:1;width:100%;min-height:80px;border:1px solid rgba(168,85,247,0.15);border-radius:3px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--quantis-bg);position:relative;";
 
-      if (fileType === 'image' && fileData) {
-        if (!w) blk.style.width = '240px';
-        if (!h) blk.style.height = '200px';
-        var img = document.createElement('img');
-        img.className = 'q-file-img';
-        img.style.cssText = 'width:100%;height:100%;object-fit:cover;pointer-events:none;';
+      if (fileType === "image" && fileData) {
+        if (!w) blk.style.width = "240px";
+        if (!h) blk.style.height = "200px";
+        var img = document.createElement("img");
+        img.className = "q-file-img";
+        img.style.cssText =
+          "width:100%;height:100%;object-fit:cover;pointer-events:none;";
         img.src = fileData;
         box.appendChild(img);
-        // resize handle
-        var rh = document.createElement('div');
-        rh.style.cssText = 'position:absolute;bottom:3px;right:3px;width:14px;height:14px;cursor:se-resize;color:var(--quantis-faint);display:flex;align-items:center;justify-content:center;font-size:10px;';
-        rh.innerHTML = '<i class="fa-solid fa-maximize" style="transform:rotate(90deg)"></i>';
-        rh.addEventListener('mousedown', function(re) {
-          re.stopPropagation(); re.preventDefault();
-          var sw = blk.offsetWidth, sh = blk.offsetHeight, sx2 = re.clientX, sy2 = re.clientY;
-          var mm = function(me) {
-            blk.style.width  = Math.max(140, sw + (me.clientX-sx2)/QS.zoom) + 'px';
-            blk.style.height = Math.max(100, sh + (me.clientY-sy2)/QS.zoom) + 'px';
+        var rh = document.createElement("div");
+        rh.style.cssText =
+          "position:absolute;bottom:3px;right:3px;width:14px;height:14px;cursor:se-resize;color:var(--quantis-faint);display:flex;align-items:center;justify-content:center;font-size:10px;";
+        rh.innerHTML =
+          '<i class="fa-solid fa-maximize" style="transform:rotate(90deg)"></i>';
+        rh.addEventListener("mousedown", function (re) {
+          re.stopPropagation();
+          re.preventDefault();
+          var sw = blk.offsetWidth,
+            sh = blk.offsetHeight,
+            sx2 = re.clientX,
+            sy2 = re.clientY;
+          var mm = function (me) {
+            blk.style.width =
+              Math.max(140, sw + (me.clientX - sx2) / QS.zoom) + "px";
+            blk.style.height =
+              Math.max(100, sh + (me.clientY - sy2) / QS.zoom) + "px";
           };
-          var mu = function() { document.removeEventListener('mousemove',mm); document.removeEventListener('mouseup',mu); qSavePage(); };
-          document.addEventListener('mousemove', mm);
-          document.addEventListener('mouseup', mu);
+          var mu = function () {
+            document.removeEventListener("mousemove", mm);
+            document.removeEventListener("mouseup", mu);
+            qSavePage();
+          };
+          document.addEventListener("mousemove", mm);
+          document.addEventListener("mouseup", mu);
         });
         blk.appendChild(rh);
       } else {
-        var ico = document.createElement('i');
-        ico.className = fileType==='pdf' ? 'fa-solid fa-file-pdf' : 'fa-solid fa-circle-question';
-        ico.style.cssText = 'font-size:2rem;color:'+(fileType==='pdf'?'#ef4444':'var(--quantis-faint)')+';margin-bottom:6px;';
+        var ico = document.createElement("i");
+        ico.className =
+          fileType === "pdf"
+            ? "fa-solid fa-file-pdf"
+            : "fa-solid fa-circle-question";
+        ico.style.cssText =
+          "font-size:2rem;color:" +
+          (fileType === "pdf" ? "#ef4444" : "var(--quantis-faint)") +
+          ";margin-bottom:6px;";
         box.appendChild(ico);
-        var lbl = document.createElement('span');
-        lbl.className = 'q-file-label';
-        lbl.style.cssText = 'font-size:9px;color:var(--quantis-muted);text-align:center;padding:0 6px;word-break:break-all;font-family:"JetBrains Mono",monospace;';
-        lbl.textContent = fileName || '';
+        var lbl = document.createElement("span");
+        lbl.className = "q-file-label";
+        lbl.style.cssText =
+          'font-size:9px;color:var(--quantis-muted);text-align:center;padding:0 6px;word-break:break-all;font-family:"JetBrains Mono",monospace;';
+        lbl.textContent = fileName || "";
         box.appendChild(lbl);
       }
       blk.appendChild(box);
@@ -5011,50 +5472,67 @@
     }
 
     // ---- FILE HANDLING ----
-    window.qTriggerFile = function() {
-      QD.ctxMenu.style.display = 'none';
-      setTimeout(function(){ QD.fileInput.click(); }, 50);
+    window.qTriggerFile = function () {
+      QD.ctxMenu.style.display = "none";
+      setTimeout(function () {
+        QD.fileInput.click();
+      }, 50);
     };
-    window.qHandleFile = function(e) {
+    window.qHandleFile = function (e) {
       var file = e.target.files[0];
       if (!file) return;
-      var x = QS.ctxCoords.x, y = QS.ctxCoords.y;
+      var x = QS.ctxCoords.x,
+        y = QS.ctxCoords.y;
       if (!qIsWithinBounds(x, y)) {
-        window.showPlanPopup('Fuera de los límites del canvas.');
-        e.target.value = '';
+        window.showPlanPopup("Fuera de los límites del canvas.");
+        e.target.value = "";
         return;
       }
-      if (file.type.startsWith('image/')) {
+      if (file.type.startsWith("image/")) {
         var reader = new FileReader();
-        reader.onload = function(ev) {
-          qRecreateFile(x, y, '', file.name, 'image', ev.target.result, 240, 200);
+        reader.onload = function (ev) {
+          qRecreateFile(
+            x,
+            y,
+            "",
+            file.name,
+            "image",
+            ev.target.result,
+            240,
+            200,
+          );
           qSavePage();
         };
         reader.readAsDataURL(file);
-      } else if (file.type === 'application/pdf') {
-        qRecreateFile(x, y, '', file.name, 'pdf', null);
+      } else if (file.type === "application/pdf") {
+        qRecreateFile(x, y, "", file.name, "pdf", null);
         qSavePage();
       } else {
-        qRecreateFile(x, y, '', file.name, 'unknown', null);
+        qRecreateFile(x, y, "", file.name, "unknown", null);
         qSavePage();
       }
-      QD.fileInput.value = '';
+      QD.fileInput.value = "";
     };
 
     // ---- HELPERS ----
     function qIsURL(s) {
-      return /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/i.test(s);
+      return /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/i.test(
+        s,
+      );
     }
-    function qFmtURL(u) { return /^https?:\/\//i.test(u) ? u : 'https://'+u; }
+    function qFmtURL(u) {
+      return /^https?:\/\//i.test(u) ? u : "https://" + u;
+    }
 
     // ---- BOOT ----
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', qInit);
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", qInit);
     } else {
       qInit();
     }
   })();
-  </script>
+</script>
+
 
 </body>
 </html>
