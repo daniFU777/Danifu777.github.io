@@ -2649,6 +2649,72 @@
     window.rtdb = rtdb;
 
     // =========================================================
+    // --- QUANTIS FIREBACKUP (guardado en la nube) ---
+    // =========================================================
+    function qFirebaseRef() {
+      if (!auth || !auth.currentUser) return null;
+      return doc(db, "users", auth.currentUser.uid, "quantis", "workspace");
+    }
+    window.qSaveToFirebase = async function() {
+      var ref = qFirebaseRef();
+      if (!ref) return;
+      if (!window.QS) return;
+      try {
+        await setDoc(ref, {
+          projects: window.QS.projects,
+          canvasData: window.QS.canvasData,
+          drawings: window.QS.drawings,
+          activeProj: window.QS.activeProj,
+          activePage: window.QS.activePage,
+          savedAt: Date.now()
+        }, { merge: true });
+      } catch (error) {
+        console.warn("Error guardando Quantis en Firebase:", error);
+      }
+    };
+    window.qLoadFromFirebase = async function() {
+      var ref = qFirebaseRef();
+      if (!ref || !window.QS) return;
+      try {
+        var snap = await getDoc(ref);
+        if (!snap.exists()) return;
+        var data = snap.data();
+        if (!data || !data.savedAt) return;
+        var localRaw = localStorage.getItem('quantis_local_data');
+        var localAt = 0;
+        try {
+          if (localRaw) {
+            var localData = JSON.parse(localRaw);
+            localAt = localData.savedAt || 0;
+          }
+        } catch (e) {}
+        if (data.savedAt > localAt) {
+          if (Array.isArray(data.projects) && data.projects.length) window.QS.projects = data.projects;
+          if (data.canvasData && typeof data.canvasData === 'object') window.QS.canvasData = data.canvasData;
+          if (data.drawings && typeof data.drawings === 'object') window.QS.drawings = data.drawings;
+          window.QS.activeProj = Number.isInteger(data.activeProj) ? data.activeProj : 0;
+          window.QS.activePage = Number.isInteger(data.activePage) ? data.activePage : 0;
+          localStorage.setItem('quantis_local_data', JSON.stringify({
+            uid: auth.currentUser ? auth.currentUser.uid : 'guest',
+            projects: window.QS.projects,
+            canvasData: window.QS.canvasData,
+            drawings: window.QS.drawings,
+            activeProj: window.QS.activeProj,
+            activePage: window.QS.activePage,
+            savedAt: data.savedAt
+          }));
+          if (typeof window.qReloadWorkspace === 'function') {
+            window.qReloadWorkspace();
+          } else if (typeof qLoadPage === 'function') {
+            qLoadPage(window.QS.activeProj, window.QS.activePage, true);
+          }
+        }
+      } catch (error) {
+        console.warn("Error cargando Quantis desde Firebase:", error);
+      }
+    };
+
+    // =========================================================
     // --- GLOBAL MEMBERSHIP PLANS & DATA PERSISTENCE ---
     // =========================================================
     const PLAN_LIMITS = {
@@ -2739,6 +2805,7 @@
         window.applyMembershipPlan(await detectUserPlan(user));
         window.loadNote(window.activeTab);
         window.loadSavedMusic();
+        window.qLoadFromFirebase?.();
 
       } else {
         window.applyMembershipPlan('normal');
@@ -4058,6 +4125,7 @@
       },
       drawings: {},
     };
+    window.QS = QS;
 
     // =========================================================
     // --- QUANTIS DOM REFERENCES ---
@@ -4126,6 +4194,14 @@
       qSetupClock();
       qSetupAutoSave();
       window.qUpdateDrawingControls();
+
+      // Auto-guardar Quantis en Firebase cada 60 segundos si el usuario está autenticado
+      setInterval(function() {
+        var view = document.getElementById('quantis-view');
+        if (view && !view.classList.contains('hidden-view') && window.auth && window.auth.currentUser) {
+          window.qSaveToFirebase();
+        }
+      }, 60000);
     }
 
     // ---- CLOCK ----
@@ -4161,12 +4237,14 @@
       document.addEventListener("visibilitychange", function () {
         if (document.visibilityState === "hidden") {
           qSavePage();
+          window.qSaveToFirebase?.();
         }
       });
 
       // Guarda antes de cerrar el navegador
       window.addEventListener("beforeunload", function () {
         qSavePage();
+        window.qSaveToFirebase?.();
       });
     }
 
