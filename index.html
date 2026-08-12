@@ -1943,16 +1943,16 @@
       flex-shrink: 0;
     }
     .panel-header.collapsed .collapse-icon {
-      transform: rotate(-90deg);
+      transform: rotate(-180deg);
     }
     .panel-content-wrapper {
       overflow: hidden;
-      transition: max-height 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+      transition: max-height 0.45s cubic-bezier(0.22, 1, 0.36, 1),
                   opacity 0.3s ease,
                   padding 0.3s ease;
     }
     .panel-content-wrapper.collapsed {
-      max-height: 0 !important;
+      max-height: 0;
       opacity: 0;
       padding-top: 0;
       padding-bottom: 0;
@@ -2319,6 +2319,319 @@
     }
     #musicPanel:not(.hidden) {
       animation: slideInRight 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    /* ========== REDISEÑO RADICAL UI/UX SHELL — DOCK DE NAVEGACIÓN ========== */
+    @keyframes dockFloat {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%      { transform: translateX(-50%) translateY(-4px); }
+    }
+    #app-dock {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99960;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      background: linear-gradient(145deg, rgba(30, 30, 38, 0.88), rgba(17, 19, 24, 0.92));
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid color-mix(in srgb, var(--color-highlight) 40%, transparent);
+      border-radius: 26px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6), 0 0 22px color-mix(in srgb, var(--color-highlight) 18%, transparent);
+      animation: dockFloat 6s ease-in-out infinite;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .dock-btn {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      min-width: 64px;
+      padding: 8px 12px;
+      border: none;
+      background: transparent;
+      color: #8a8aa0;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+                  color 0.25s ease,
+                  background 0.25s ease,
+                  box-shadow 0.25s ease;
+      overflow: hidden;
+      font-family: inherit;
+      font-size: 0.72em;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+    .dock-btn i {
+      font-size: 1.35em;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .dock-btn:hover {
+      color: var(--color-highlight);
+      transform: translateY(-3px);
+      background: color-mix(in srgb, var(--color-highlight) 12%, transparent);
+    }
+    .dock-btn:hover i {
+      transform: scale(1.2) rotate(-8deg);
+    }
+    .dock-btn:active {
+      transform: translateY(-1px) scale(0.92);
+    }
+    .dock-btn.active {
+      color: var(--color-highlight);
+      background: color-mix(in srgb, var(--color-highlight) 18%, transparent);
+      box-shadow: 0 0 14px color-mix(in srgb, var(--color-highlight) 35%, transparent),
+                  inset 0 0 10px color-mix(in srgb, var(--color-highlight) 12%, transparent);
+      animation: pulseGlow 2.4s ease-in-out infinite;
+    }
+    .dock-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 16px;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--color-highlight);
+      box-shadow: 0 0 8px var(--color-highlight);
+    }
+    @media (max-width: 560px) {
+      #app-dock { gap: 2px; padding: 6px; border-radius: 20px; bottom: 10px; }
+      .dock-btn { min-width: 52px; padding: 6px 8px; font-size: 0.62em; }
+    }
+
+    /* ========== TRANSICIONES DE VISTA CINEMATOGRÁFICAS (MORPHING 3D) ========== */
+    body {
+      perspective: 1400px;
+      transform-style: preserve-3d;
+    }
+    @keyframes viewOut3D {
+      0%   { opacity: 1; transform: translateZ(0) scale(1) rotateX(0); filter: blur(0); }
+      100% { opacity: 0; transform: translateZ(-320px) scale(0.72) rotateX(6deg); filter: blur(6px); }
+    }
+    @keyframes viewIn3D {
+      0%   { opacity: 0; transform: translateZ(-420px) scale(1.25) rotateX(-8deg) translateY(30px); filter: blur(10px); }
+      100% { opacity: 1; transform: translateZ(0) scale(1) rotateX(0) translateY(0); filter: blur(0); }
+    }
+    @keyframes viewInSlide {
+      0%   { opacity: 0; transform: translateX(80px) scale(0.94); }
+      100% { opacity: 1; transform: translateX(0) scale(1); }
+    }
+    #main-dashboard-view.view-leaving,
+    #deep-flow-view.view-leaving,
+    #quantis-view.view-leaving {
+      animation: viewOut3D 0.38s cubic-bezier(0.55, 0, 1, 0.45) forwards !important;
+      will-change: transform, opacity, filter;
+      pointer-events: none;
+    }
+    #main-dashboard-view.view-entering,
+    #deep-flow-view.view-entering,
+    #quantis-view.view-entering {
+      animation: viewIn3D 0.6s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+      will-change: transform, opacity, filter;
+    }
+    #quantis-view.view-entering {
+      animation-name: viewInSlide;
+    }
+    /* El contador de vistas (main) entra con slide lateral */
+    #main-dashboard-view.view-entering {
+      animation-name: viewInSlide;
+    }
+    #deep-flow-view.view-entering {
+      animation-name: viewIn3D;
+    }
+
+    /* ========== STAGGER / CASCADA DE ENTRADA ========== */
+    #main-dashboard-view.view-entering .chart-panel { animation: fadeInUp 0.5s 0.08s both, neonPulse 3s 0.6s infinite; }
+    #main-dashboard-view.view-entering .notepad-panel { animation: fadeInUp 0.5s 0.16s both, neonPulse 3s 0.6s infinite; }
+    #main-dashboard-view.view-entering .bottom-container > *:nth-child(1) { animation: fadeInUp 0.45s 0.24s both, neonPulse 3s 0.6s infinite; }
+    #main-dashboard-view.view-entering .bottom-container > *:nth-child(2) { animation: fadeInUp 0.45s 0.32s both, neonPulse 3s 0.6s infinite; }
+    #main-dashboard-view.view-entering .gemini-panel { animation: fadeInUp 0.45s 0.42s both, neonPulse 3s 0.6s infinite; }
+    #main-dashboard-view.view-entering .top-bar { animation: fadeInUp 0.4s 0.02s both; }
+    #main-dashboard-view.view-entering .user-info { animation: fadeInUp 0.4s 0.05s both; }
+    #main-dashboard-view.view-entering #fecha-hora { animation: fadeInUp 0.35s 0.08s both; }
+    #main-dashboard-view.view-entering .music-container { animation: fadeInUp 0.35s 0.1s both; }
+    #deep-flow-view.view-entering #hdr { animation: viewIn3D 0.45s 0.05s both !important; }
+    #deep-flow-view.view-entering .corner-block { animation: fadeInUp 0.4s both; }
+    #deep-flow-view.view-entering .corner-block:nth-child(1) { animation-delay: 0.1s; }
+    #deep-flow-view.view-entering .corner-block:nth-child(2) { animation-delay: 0.16s; }
+    #deep-flow-view.view-entering .corner-block:nth-child(3) { animation-delay: 0.22s; }
+    #deep-flow-view.view-entering .corner-block:nth-child(4) { animation-delay: 0.28s; }
+    #deep-flow-view.view-entering .corner-block:nth-child(5) { animation-delay: 0.34s; }
+    #deep-flow-view.view-entering .corner-block:nth-child(6) { animation-delay: 0.4s; }
+    #quantis-view.view-entering #quantis-header { animation: fadeInUp 0.4s 0.02s both; }
+    #quantis-view.view-entering #quantis-sidebar { animation: fadeInUp 0.45s 0.12s both; }
+    #quantis-view.view-entering #quantis-viewport { animation: fadeInScale 0.5s 0.2s both; }
+
+    /* ========== FONDO ANIMADO VIVO (GRID EN MOVIMIENTO + GRADIENTE) ========== */
+    @keyframes bgGridDrift {
+      0%   { background-position: 0 0, 0 0; }
+      100% { background-position: 42px 42px, 42px 42px; }
+    }
+    @keyframes gradientShift {
+      0%   { filter: hue-rotate(0deg) brightness(1); }
+      50%  { filter: hue-rotate(18deg) brightness(1.08); }
+      100% { filter: hue-rotate(0deg) brightness(1); }
+    }
+    #main-dashboard-view {
+      background-image:
+        linear-gradient(color-mix(in srgb, var(--color-highlight) 7%, transparent) 1px, transparent 1px),
+        linear-gradient(90deg, color-mix(in srgb, var(--color-highlight) 7%, transparent) 1px, transparent 1px);
+      background-size: 42px 42px;
+      animation: bgGridDrift 9s linear infinite, gradientShift 14s ease-in-out infinite;
+    }
+    #deep-flow-view {
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(0, 240, 255, 0.05), transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(255, 0, 127, 0.05), transparent 45%),
+        #000;
+      animation: gradientShift 18s ease-in-out infinite;
+    }
+
+    /* ========== GLASSMORPHISM + NEON EN PANELES ========== */
+    @keyframes neonPulse {
+      0%, 100% { box-shadow: 0 0 6px color-mix(in srgb, var(--color-highlight) 22%, transparent),
+                              inset 0 0 12px color-mix(in srgb, var(--color-highlight) 6%, transparent); }
+      50%      { box-shadow: 0 0 18px color-mix(in srgb, var(--color-highlight) 45%, transparent),
+                             inset 0 0 22px color-mix(in srgb, var(--color-highlight) 12%, transparent); }
+    }
+    #main-dashboard-view .chart-panel,
+    #main-dashboard-view .notepad-panel,
+    #main-dashboard-view .calculator-panel,
+    #main-dashboard-view .pomodoro-panel,
+    #main-dashboard-view .gemini-panel {
+      background: linear-gradient(160deg,
+        color-mix(in srgb, var(--color-input-bg) 82%, transparent),
+        color-mix(in srgb, var(--color-main-bg) 72%, transparent));
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-color: color-mix(in srgb, var(--color-highlight) 55%, var(--color-border));
+      animation: neonPulse 3.2s ease-in-out infinite;
+      transition: transparency 0.3s ease, max-height 0.4s ease, opacity 0.3s ease;
+    }
+    /* Fondo translúcido del área principal para el glassmorphism */
+    #main-dashboard-view .main {
+      background: color-mix(in srgb, var(--color-main-bg) 55%, transparent);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    #main-dashboard-view .top-bar {
+      background: color-mix(in srgb, var(--color-header-bg) 62%, transparent);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 2px solid color-mix(in srgb, var(--color-highlight) 60%, transparent);
+    }
+    /* Las cajas pequeñas también reciben el toque glass */
+    #main-dashboard-view .box {
+      background: color-mix(in srgb, var(--color-input-bg) 72%, transparent);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    @supports not (backdrop-filter: blur(1px)) {
+      #main-dashboard-view .chart-panel,
+      #main-dashboard-view .notepad-panel,
+      #main-dashboard-view .calculator-panel,
+      #main-dashboard-view .pomodoro-panel,
+      #main-dashboard-view .gemini-panel,
+      #main-dashboard-view .main,
+      #main-dashboard-view .top-bar,
+      #main-dashboard-view .box { backdrop-filter: none; -webkit-backdrop-filter: none; }
+    }
+
+    /* ========== MICRO-INTERACCIONES: BRILLO QUE RECORRE LOS BOTONES ========== */
+    .google-button, .logout-btn, .calc-button, .pomo-btn, .tab-btn,
+    .music-btn, .gemini-btn, .icon-square-btn, .notepad-file-btn,
+    .q-tool-btn, .dock-btn, .q-nav-btn, #toggleMusicPanelQuantis {
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+    .google-button::before, .logout-btn::before, .calc-button::before,
+    .pomo-btn::before, .tab-btn::before, .music-btn::before,
+    .gemini-btn::before, .icon-square-btn::before, .notepad-file-btn::before,
+    .q-tool-btn::before, .dock-btn::before, .q-nav-btn::before, #toggleMusicPanelQuantis::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -120%;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(105deg, transparent, rgba(255,255,255,0.28), transparent);
+      transform: skewX(-25deg);
+      transition: left 0.55s ease;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .google-button:hover::before, .logout-btn:hover::before, .calc-button:hover::before,
+    .pomo-btn:hover::before, .tab-btn:hover::before, .music-btn:hover::before,
+    .gemini-btn:hover::before, .icon-square-btn:hover::before, .notepad-file-btn:hover::before,
+    .q-tool-btn:hover::before, .dock-btn:hover::before, .q-nav-btn:hover::before, #toggleMusicPanelQuantis:hover::before {
+      left: 130%;
+    }
+
+    /* ========== MODALES CON EXPANSIÓN ESCÉNICA DESDE EL CENTRO ========== */
+    @keyframes modalBurst {
+      0%   { opacity: 0; transform: scale(0.6); }
+      60%  { opacity: 1; transform: scale(1.06); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    #plansModal {
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      background: rgba(0, 0, 0, 0.65);
+    }
+    #plansModal.open .plans-card {
+      animation: modalBurst 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+    #miniPlanPopup.open {
+      animation: modalBurst 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    /* ========== MARCO EXTERIOR DEL DROPDOWN (GLASS) ========== */
+    #dominon-config-dropdown,
+    #quantis-config-dropdown {
+      background: linear-gradient(160deg, rgba(34, 36, 44, 0.92), rgba(17, 19, 24, 0.94));
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    /* ========== PANELES CONTENIDO — PADDING FLUIDO EN COLAPSO ========== */
+    .panel-content-wrapper {
+      box-sizing: border-box;
+    }
+
+    /* ========== MUSIC PANEL GLASS ========== */
+    #musicPanel {
+      background: linear-gradient(160deg, color-mix(in srgb, #1F1F1F 80%, transparent), rgba(17,19,24,0.9));
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-color: color-mix(in srgb, var(--color-highlight) 55%, #444);
+    }
+    #quantis-drawing-tools-panel {
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    #q-context-menu {
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    /* ========== AJUSTE FINAL: MÁRGEN PARA NO TAPAR CONTENIDO CON EL DOCK ========== */
+    @media (max-width: 1024px) {
+      #main-dashboard-view .main { padding-bottom: 88px; }
+    }
+    @media (max-width: 768px) {
+      #app-dock { bottom: 8px; }
+      #main-dashboard-view .main { padding-bottom: 80px; }
+      #musicPanel { bottom: 84px; }
     }
   </style>
 </head>
@@ -3122,6 +3435,26 @@
       </div>
     </div>
   </div>
+
+  <!-- DOCK DE NAVEGACIÓN FLOTANTE (UI/UX SHELL) -->
+  <nav id="app-dock" aria-label="Navegación principal">
+    <button class="dock-btn" id="dock-dash" data-view="main-dashboard-view" title="Dashboard">
+      <i class="fa-solid fa-grid-2"></i>
+      <span>Dashboard</span>
+    </button>
+    <button class="dock-btn" id="dock-flow" data-view="deep-flow-view" title="Deep Flow">
+      <i class="fa-solid fa-wave-square"></i>
+      <span>Deep Flow</span>
+    </button>
+    <button class="dock-btn" id="dock-quantis" data-view="quantis-view" title="Quantis">
+      <i class="fa-solid fa-infinity"></i>
+      <span>Quantis</span>
+    </button>
+    <button class="dock-btn" id="dock-music" title="Reproductor">
+      <i class="fa-solid fa-music"></i>
+      <span>Música</span>
+    </button>
+  </nav>
 
   <!-- SCRIPTS DE INICIALIZACIN DE FIREBASE (V10 MODULAR) -->
   <script type="module">
@@ -6117,7 +6450,7 @@
   })();
 </script>
 
-  <!-- ========== PANEL COLLAPSE/EXPAND ENGINE ========== -->
+  <!-- ========== PANEL COLLAPSE/EXPAND ENGINE (TRANSICIÓN FLUIDA POR MAX-HEIGHT) ========== -->
   <script>
     (function() {
       'use strict';
@@ -6134,21 +6467,37 @@
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(states)); } catch(e) {}
       }
 
+      // Colapsa/expande de forma animada midiendo el contenido real (scrollHeight)
       function togglePanel(panelId) {
         var header = document.querySelector('.panel-header[data-panel="' + panelId + '"]');
         var content = document.querySelector('.panel-content-wrapper[data-panel-content="' + panelId + '"]');
         if (!header || !content) return;
 
         var isCollapsed = header.classList.contains('collapsed');
+        var targetHeight = content.scrollHeight + 'px';
 
         if (isCollapsed) {
+          // EXPANDIR: medir altura, forzar reflow, luego liberar a auto tras la transición
+          content.style.maxHeight = targetHeight;
+          var heightNow = content.style.maxHeight;
+          void heightNow; // referencia para mantenerlo explícito
           header.classList.remove('collapsed');
           content.classList.remove('collapsed');
           content.classList.add('expanded');
+          content.style.maxHeight = targetHeight;
+          content.addEventListener('transitionend', function onEnd(e) {
+            if (e.propertyName !== 'max-height') return;
+            content.removeEventListener('transitionend', onEnd);
+            content.style.maxHeight = 'none';
+          });
         } else {
+          // COLAPSAR: primero fijar al alto real, forzar reflow, luego a 0 (CSS transiciona)
+          content.style.maxHeight = targetHeight;
+          void content.offsetHeight; // fuerza reflow
           header.classList.add('collapsed');
           content.classList.remove('expanded');
           content.classList.add('collapsed');
+          content.style.maxHeight = '0px';
         }
 
         // Persist state
@@ -6184,28 +6533,120 @@
         });
       }
 
-      // Restore saved states on load
+      // Restore saved states on load (sin animación)
       var savedStates = getPanelStates();
       Object.keys(savedStates).forEach(function(panelId) {
+        var header = document.querySelector('.panel-header[data-panel="' + panelId + '"]');
+        var content = document.querySelector('.panel-content-wrapper[data-panel-content="' + panelId + '"]');
+        if (!header || !content) return;
         if (savedStates[panelId]) {
-          var header = document.querySelector('.panel-header[data-panel="' + panelId + '"]');
-          var content = document.querySelector('.panel-content-wrapper[data-panel-content="' + panelId + '"]');
-          if (header && content) {
-            header.classList.remove('collapsed');
-            content.classList.remove('collapsed');
-            content.classList.add('expanded');
-          }
+          header.classList.remove('collapsed');
+          content.classList.remove('collapsed');
+          content.classList.add('expanded');
+          content.style.maxHeight = 'none';
         } else {
-          var h2 = document.querySelector('.panel-header[data-panel="' + panelId + '"]');
-          var c2 = document.querySelector('.panel-content-wrapper[data-panel-content="' + panelId + '"]');
-          if (h2 && c2) {
-            h2.classList.add('collapsed');
-            c2.classList.remove('expanded');
-            c2.classList.add('collapsed');
-          }
+          header.classList.add('collapsed');
+          content.classList.remove('expanded');
+          content.classList.add('collapsed');
+          content.style.maxHeight = '0px';
         }
       });
+
+      // ============ TRANSICIONES DE VISTA CINEMATOGRÁFICAS ============
+      // Envolvemos switchAppView SIN tocar su lógica original (la conservamos intacta).
+      var originalSwitchAppView = window.switchAppView;
+      var viewTransitionBusy = false;
+      var ALL_HIDABLE_VIEWS = ['main-dashboard-view', 'deep-flow-view', 'quantis-view'];
+
+      function getCurrentVisibleView() {
+        for (var i = 0; i < ALL_HIDABLE_VIEWS.length; i++) {
+          var el = document.getElementById(ALL_HIDABLE_VIEWS[i]);
+          if (el && !el.classList.contains('hidden-view')) return ALL_HIDABLE_VIEWS[i];
+        }
+        return null;
+      }
+
+      function syncDockState(activeViewId) {
+        document.querySelectorAll('#app-dock .dock-btn[data-view]').forEach(function(btn) {
+          btn.classList.toggle('active', btn.getAttribute('data-view') === activeViewId);
+        });
+      }
+
+      window.switchAppView = function(targetViewId) {
+        // Entrega sincrónica si repetimos el mismo destino o estamos ocupados con la animación
+        if (viewTransitionBusy || getCurrentVisibleView() === targetViewId) {
+          try { originalSwitchAppView(targetViewId); } catch(e) {}
+          syncDockState(targetViewId);
+          return;
+        }
+
+        var currentViewId = getCurrentVisibleView();
+        var currentEl = currentViewId ? document.getElementById(currentViewId) : null;
+        var targetEl = document.getElementById(targetViewId);
+        viewTransitionBusy = true;
+
+        if (currentEl) currentEl.classList.add('view-leaving');
+
+        setTimeout(function() {
+          // 1) Salida completada -> quitar marca + llamar lógica ORIGINAL (inalterada)
+          if (currentEl) currentEl.classList.remove('view-leaving');
+          try { originalSwitchAppView(targetViewId); } catch(e) {}
+          // 2) Entrada del destino con morphing
+          if (targetEl) targetEl.classList.add('view-entering');
+          syncDockState(targetViewId);
+          setTimeout(function() {
+            if (targetEl) targetEl.classList.remove('view-entering');
+            viewTransitionBusy = false;
+          }, 680);
+        }, 380);
+      };
+
+      // ============ DOCK DE NAVEGACIÓN ============
+      var dock = document.getElementById('app-dock');
+      if (dock) {
+        dock.addEventListener('click', function(e) {
+          var btn = e.target.closest('.dock-btn');
+          if (!btn) return;
+          if (btn.id === 'dock-music') {
+            var mp = document.getElementById('musicPanel');
+            if (mp) mp.classList.toggle('hidden');
+            btn.classList.toggle('active');
+            return;
+          }
+          var viewId = btn.getAttribute('data-view');
+          if (viewId) window.switchAppView(viewId);
+        });
+      }
+
+      // Sincroniza el dock con la vista actual al cargar
+      window.addEventListener('DOMContentLoaded', function() {
+        syncDockState(getCurrentVisibleView());
+      });
+      if (document.readyState !== 'loading') {
+        setTimeout(function() { syncDockState(getCurrentVisibleView()); }, 300);
+      }
     })();
+  </script>
+
+  <!-- ========== COMPATIBILIDAD: si el router original no existiera, define uno que no rompa nada ========== -->
+  <script>
+    if (typeof window.switchAppView !== 'function') {
+      window.switchAppView = function(targetViewId) {
+        ['main-dashboard-view', 'deep-flow-view', 'quantis-view'].forEach(function(id) {
+          var el = document.getElementById(id);
+          if (!el) return;
+          if (id === targetViewId) el.classList.remove('hidden-view');
+          else el.classList.add('hidden-view');
+        });
+      };
+    }
+    if (typeof window.syncDockState !== 'function') {
+      window.syncDockState = function(activeViewId) {
+        document.querySelectorAll('#app-dock .dock-btn[data-view]').forEach(function(btn) {
+          btn.classList.toggle('active', btn.getAttribute('data-view') === activeViewId);
+        });
+      };
+    }
   </script>
 
 
