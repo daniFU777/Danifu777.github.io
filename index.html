@@ -2729,7 +2729,10 @@
       return PLAN_LIMITS[window.userPlan] || PLAN_LIMITS.normal;
     };
     window.maxPages = window.getPlanLimits().maxNotepadPages;
-    window.createdPagesCount = parseInt(localStorage.getItem('danifu_pages_count'), 10) || 3;
+    function storageKeyForUser(base) {
+      return base + (window.auth && window.auth.currentUser ? window.auth.currentUser.uid : 'guest');
+    }
+    window.createdPagesCount = parseInt(localStorage.getItem(storageKeyForUser('danifu_pages_count_')), 10) || 3;
 
     async function detectUserPlan(user) {
       if (!user) return 'normal';
@@ -2748,11 +2751,14 @@
       window.userPlan = PLAN_LIMITS[plan] ? plan : 'normal';
       window.isMembershipPlanReady = true;
       window.maxPages = window.getPlanLimits().maxNotepadPages;
-      window.createdPagesCount = Math.max(1, window.createdPagesCount || 3);
-      localStorage.setItem('danifu_pages_count', window.createdPagesCount);
+      window.activeTab = localStorage.getItem(storageKeyForUser('danifu_active_tab_')) || "1";
+      var storedCount = parseInt(localStorage.getItem(storageKeyForUser('danifu_pages_count_')), 10);
+      if (!storedCount) storedCount = 3;
+      window.createdPagesCount = Math.min(Math.max(1, storedCount), window.maxPages);
+      localStorage.setItem(storageKeyForUser('danifu_pages_count_'), window.createdPagesCount);
       if (parseInt(window.activeTab, 10) > window.maxPages) {
         window.activeTab = "1";
-        localStorage.setItem('danifu_active_tab', window.activeTab);
+        localStorage.setItem(storageKeyForUser('danifu_active_tab_'), window.activeTab);
       }
       const actions = document.getElementById('notepadActions');
       if (actions) actions.style.display = window.userPlan === 'Extended' ? 'flex' : 'none';
@@ -2769,7 +2775,7 @@
       if (!auth.currentUser) return;
       if (window.userPlan === 'normal') return; // Normal plan: no save
       try {
-        var saved = localStorage.getItem('danifu_music_progress');
+        var saved = localStorage.getItem(storageKeyForUser('danifu_music_progress_'));
         if (!saved) return;
         var data = JSON.parse(saved);
         if (data && window.player) {
@@ -2815,7 +2821,11 @@
     });
 
     document.getElementById('googleSignInBtn').onclick = () => signInWithPopup(auth, provider);
-    document.getElementById('logoutBtn').onclick = () => signOut(auth);
+    document.getElementById('logoutBtn').onclick = async () => {
+      try { if (window.player && window.player.stopVideo) window.player.stopVideo(); } catch (e) {}
+      await signOut(auth);
+      window.location.reload();
+    };
 
     // =========================================================
     // --- MUSIC PLAYER AUTOSAVE ENGINE ---
@@ -2846,7 +2856,7 @@
               const playlist = window.player.getPlaylist ? window.player.getPlaylist() : [];
               const playlistIndex = window.player.getPlaylistIndex ? window.player.getPlaylistIndex() : 0;
               if (videoData && videoData.video_id) {
-                 localStorage.setItem('danifu_music_progress', JSON.stringify({
+                 localStorage.setItem(storageKeyForUser('danifu_music_progress_'), JSON.stringify({
                     videoId: videoData.video_id,
                     index: playlistIndex >= 0 ? playlistIndex : Math.max(0, playlist.indexOf(videoData.video_id)),
                     time: currentTime,
@@ -2862,11 +2872,11 @@
     // =========================================================
     // --- NOTEPAD CONTROLLER (LOCAL & CLOUD) ---
     // =========================================================
-    window.activeTab = localStorage.getItem('danifu_active_tab') || "1";
+    window.activeTab = localStorage.getItem(storageKeyForUser('danifu_active_tab_')) || "1";
 
     if (parseInt(window.activeTab, 10) > window.maxPages) {
         window.activeTab = "1";
-        localStorage.setItem('danifu_active_tab', window.activeTab);
+        localStorage.setItem(storageKeyForUser('danifu_active_tab_'), window.activeTab);
     }
     
     let saveTimeout;
@@ -2875,7 +2885,7 @@
        const notepadEl = document.getElementById('notepad');
        if (!notepadEl) return;
        if (window.getPlanLimits().saveNotepad === 'local' || !window.auth || !window.auth.currentUser) {
-          notepadEl.value = localStorage.getItem('notepad_page_' + tabNum) || "";
+          notepadEl.value = localStorage.getItem(storageKeyForUser('notepad_page_') + '_' + tabNum) || "";
           return;
        }
        try {
@@ -2897,7 +2907,7 @@
        const notepadEl = document.getElementById('notepad');
        if (!notepadEl) return;
        if (window.getPlanLimits().saveNotepad === 'local' || !window.auth || !window.auth.currentUser) {
-          localStorage.setItem('notepad_page_' + window.activeTab, notepadEl.value);
+          localStorage.setItem(storageKeyForUser('notepad_page_') + '_' + window.activeTab, notepadEl.value);
           return;
        }
        try {
@@ -2911,8 +2921,12 @@
     const notepadEl = document.getElementById('notepad');
     if (notepadEl) {
         notepadEl.addEventListener('input', function() {
-           clearTimeout(saveTimeout);
-           saveTimeout = setTimeout(window.saveCurrentNote, 800);
+           if (window.getPlanLimits().saveNotepad === 'local' || !window.auth || !window.auth.currentUser) {
+              window.saveCurrentNote();
+           } else {
+              clearTimeout(saveTimeout);
+              saveTimeout = setTimeout(window.saveCurrentNote, 800);
+           }
         });
     }
 
@@ -2946,7 +2960,7 @@
             alert('Limite de paginas alcanzado para tu plan actual.');
           } else {
             window.createdPagesCount++;
-            localStorage.setItem('danifu_pages_count', window.createdPagesCount);
+            localStorage.setItem(storageKeyForUser('danifu_pages_count_'), window.createdPagesCount);
             window.switchTab(window.createdPagesCount);
             window.renderTabs();
           }
@@ -2999,8 +3013,9 @@
     });
 
     window.switchTab = function(tabNum) {
+      window.saveCurrentNote();
       window.activeTab = String(tabNum);
-      localStorage.setItem('danifu_active_tab', window.activeTab);
+      localStorage.setItem(storageKeyForUser('danifu_active_tab_'), window.activeTab);
       
       var notepadTitle = document.getElementById('notepad-title');
       if (notepadTitle) notepadTitle.innerText = (window.currentLang === 'en' ? "Notepad - Note " : "Bloc de Notas - Nota ") + window.activeTab;
