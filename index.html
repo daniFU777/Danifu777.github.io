@@ -4398,26 +4398,38 @@
 
     // ---- AUTO-SAVE ----
     function qSetupAutoSave() {
-      // Guarda cada 30 segundos si Quantis está visible
+      // Guarda cada 30 segundos si Quantis está visible y hay sesión iniciada
       setInterval(function () {
         var view = document.getElementById("quantis-view");
-        if (view && !view.classList.contains("hidden-view")) {
+        if (
+          view &&
+          !view.classList.contains("hidden-view") &&
+          window.auth &&
+          window.auth.currentUser
+        ) {
           qSavePage();
         }
       }, 30000);
 
       // Guarda al cambiar de pestaña o minimizar ventana
       document.addEventListener("visibilitychange", function () {
-        if (document.visibilityState === "hidden") {
+        if (
+          document.visibilityState === "hidden" &&
+          window.auth &&
+          window.auth.currentUser
+        ) {
           qSavePage();
           window.qSaveToFirebase?.();
         }
       });
 
-      // Guarda antes de cerrar el navegador
+      // Guarda antes de cerrar el navegador (solo con sesión activa, para no
+      // volcar el workspace del usuario en la clave 'guest' al hacer logout)
       window.addEventListener("beforeunload", function () {
-        qSavePage();
-        window.qSaveToFirebase?.();
+        if (window.auth && window.auth.currentUser) {
+          qSavePage();
+          window.qSaveToFirebase?.();
+        }
       });
     }
 
@@ -4647,6 +4659,35 @@
     // =========================================================
     function qLoadWorkspace() {
       try {
+        // Reinicia por completo el workspace antes de cargar: así nunca se
+        // mantiene el estado del usuario anterior (p. ej. lo que el cierre de
+        // sesión pudo volcar en la clave 'guest') al entrar otro usuario.
+        QS.projects = [
+          {
+            id: "qp-1",
+            name: "Proyecto Alpha",
+            pages: ["Página Inicial", "Investigación"],
+          },
+          { id: "qp-2", name: "Proyecto Beta", pages: ["Resumen"] },
+        ];
+        QS.canvasData = {
+          "0-0": [
+            {
+              type: "text",
+              x: 3870,
+              y: 3870,
+              desc: "Bienvenida",
+              content:
+                "Lienzo Infinito — Click para crear un bloque. Scroll para zoom. Arrastra para navegar. Clic derecho para insertar archivos.",
+            },
+          ],
+          "0-1": [],
+          "1-0": [],
+        };
+        QS.drawings = {};
+        QS.activeProj = 0;
+        QS.activePage = 0;
+
         var raw = localStorage.getItem(quantisStorageKey());
         if (!raw) {
           // Migración única: datos guardados con la antigua clave global compartida
@@ -4698,7 +4739,10 @@
     // Expuesto globalmente para que el handler de auth pueda
     // recargar el workspace cuando el usuario se autentica.
     window.qReloadWorkspace = function () {
-      qSavePage();
+      // IMPORTANTE: no se llama a qSavePage() aquí. Al cambiar de usuario,
+      // qSavePage internamente llama a qPersistWorkspace() y guardaría el
+      // workspace visible (que puede ser el del usuario anterior) dentro de la
+      // clave del usuario actual. Siempre se parte de un workspace limpio.
       qLoadWorkspace();
       qApplyCanvasSize();
       qRenderProjects();
