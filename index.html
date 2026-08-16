@@ -2680,7 +2680,7 @@
         if (!snap.exists()) return;
         var data = snap.data();
         if (!data || !data.savedAt) return;
-        var localRaw = localStorage.getItem('quantis_local_data');
+        var localRaw = localStorage.getItem(storageKeyForUser('quantis_local_data_'));
         var localAt = 0;
         try {
           if (localRaw) {
@@ -2694,7 +2694,7 @@
           if (data.drawings && typeof data.drawings === 'object') window.QS.drawings = data.drawings;
           window.QS.activeProj = Number.isInteger(data.activeProj) ? data.activeProj : 0;
           window.QS.activePage = Number.isInteger(data.activePage) ? data.activePage : 0;
-          localStorage.setItem('quantis_local_data', JSON.stringify({
+          localStorage.setItem(storageKeyForUser('quantis_local_data_'), JSON.stringify({
             uid: auth.currentUser ? auth.currentUser.uid : 'guest',
             projects: window.QS.projects,
             canvasData: window.QS.canvasData,
@@ -2871,6 +2871,10 @@
         window.applyMembershipPlan(await detectUserPlan(user));
         window.loadNote(window.activeTab);
         window.loadSavedMusic();
+        // Recarga el workspace de Quantis con el UID real del usuario:
+        // en la carga inicial qInit() corre antes de que Firebase resuelva la
+        // sesión, así que aquí se asegura que cada usuario vea su propio proyecto.
+        window.qReloadWorkspace?.();
         window.qLoadFromFirebase?.();
         if (window.isPremiumPlan && window.isPremiumPlan() && window.loadTradingCloud) {
           window.loadTradingCloud();
@@ -4489,7 +4493,9 @@
     // --- QUANTIS LOCAL STORAGE ENGINE ---
     // =========================================================
     function quantisStorageKey() {
-      return "quantis_local_data";
+      // Clave aislada por usuario (igual que el bloc de notas), para que los
+      // proyectos de un usuario no se mezclen con los de otro en el mismo navegador.
+      return "quantis_local_data_" + qCurrentUid();
     }
 
     function qCurrentUid() {
@@ -4642,6 +4648,21 @@
     function qLoadWorkspace() {
       try {
         var raw = localStorage.getItem(quantisStorageKey());
+        if (!raw) {
+          // Migración única: datos guardados con la antigua clave global compartida
+          // ("quantis_local_data"). Solo se atribuyen a este usuario si su UID coincide,
+          // así no se pierde la información ya guardada.
+          try {
+            var old = localStorage.getItem("quantis_local_data");
+            if (old) {
+              var oldData = JSON.parse(old);
+              if (oldData && oldData.uid && oldData.uid === qCurrentUid()) {
+                raw = old;
+                try { localStorage.setItem(quantisStorageKey(), old); } catch (wErr) {}
+              }
+            }
+          } catch (migErr) {}
+        }
         if (!raw) return;
         var data = JSON.parse(raw);
         // ELIMINADO: if (data.uid && data.uid !== qCurrentUid()) return;
