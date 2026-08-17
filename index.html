@@ -69,6 +69,83 @@
       color: var(--color-highlight);
     }
 
+    /* --- Loader de guardado en la nube (Premium) --- */
+    .cloud-loader-wrap {
+      display: none;
+      position: absolute;
+      z-index: 50;
+      padding: 4px;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 6px;
+      line-height: 0;
+    }
+    .cloud-loader-wrap.visible {
+      display: block;
+    }
+    .cloud-loader {
+      width: 20px;
+      height: 20px;
+      background: #353535;
+      display: block;
+      position: relative;
+      box-sizing: border-box;
+      animation: rotationBack 1s ease-in-out infinite reverse;
+    }
+    .cloud-loader::before {
+      content: '';
+      box-sizing: border-box;
+      left: 0;
+      top: 0;
+      transform: rotate(45deg);
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: #2e2e2e;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
+    }
+    .cloud-loader::after {
+      content: '';
+      box-sizing: border-box;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      background: rgb(0, 0, 0);
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
+    }
+    @keyframes rotationBack {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(-360deg);
+      }
+    }
+    /* Posición del loader en el notepad (esquina superior derecha) */
+    #notepadSaveLoader {
+      top: 8px;
+      right: 8px;
+    }
+    /* Posición del loader en Quantis (cabecera, lado derecho) */
+    #quantisSaveLoader {
+      top: 6px;
+      right: 6px;
+    }
+    /* Loader de reproducción (panel del reproductor) */
+    #musicLoader {
+      top: 8px;
+      right: 8px;
+    }
+    /* Loader del gráfico (centrado sobre el panel) */
+    #chartLoader {
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
     /* ========== LOGIN SCREEN (ESTTICA EN LA RAZ) ========== */
     #loginScreen {
       position: fixed;
@@ -418,6 +495,7 @@
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
+      position: relative;
     }
     #main-dashboard-view .chart-header {
       display: flex;
@@ -445,10 +523,12 @@
       border-radius: 8px;
       padding: 12px;
       box-shadow: var(--shadow-light);
+      position: relative;
       display: flex;
       flex-direction: column;
       flex-grow: 1;
       min-height: 200px;
+      position: relative;
     }
     #main-dashboard-view .notepad-header-row {
       display: flex;
@@ -2013,6 +2093,9 @@
           <iframe class="chart-iframe" id="tradingViewChart"
             src="https://s.tradingview.com/widgetembed/?symbol=BINANCE%3AUSDTARS&interval=D&theme=dark&style=1&locale=es&toolbar_bg=f1f3f6&allow_symbol_change=1&enable_publishing=0&hide_side_toolbar=0&save_image=0&studies=[]&show_popup_button=0&calendar=0&hide_volume=1&amp;no-cache"
             frameborder="0" allowfullscreen></iframe>
+          <div id="chartLoader" class="cloud-loader-wrap" title="Cargando gráfico...">
+            <div class="cloud-loader"></div>
+          </div>
         </div>
 
         <div class="notepad-panel">
@@ -2030,6 +2113,9 @@
             </div>
           </div>
           <textarea id="notepad" placeholder="Escribe tus notas aqu..."></textarea>
+          <div id="notepadSaveLoader" class="cloud-loader-wrap" title="Guardando en la nube...">
+            <div class="cloud-loader"></div>
+          </div>
         </div>
 
         <div class="bottom-container">
@@ -2218,6 +2304,7 @@
         flex-shrink: 0;
         z-index: 30;
         box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+        position: relative;
       }
       #quantis-nav-left {
         display: flex;
@@ -2581,6 +2668,9 @@
            <svg id="quantis-drawing-svg" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:1;"></svg>
          </div>
          <span id="q-zoom-hint">SCROLL: ZOOM &nbsp;|&nbsp; DRAG: PAN &nbsp;|&nbsp; CLICK: NEW BLOCK &nbsp;|&nbsp; RIGHT-CLICK: FILE</span>
+         <div id="quantisSaveLoader" class="cloud-loader-wrap" title="Guardando en la nube...">
+           <div class="cloud-loader"></div>
+         </div>
        </main>
 
     </div>
@@ -2725,6 +2815,9 @@
         <input type="range" id="volumeSlider" min="0" max="100" value="50" class="volume-slider">
         <i class="fa-solid fa-volume-high"></i>
       </div>
+      <div id="musicLoader" class="cloud-loader-wrap" title="Cargando reproducción...">
+        <div class="cloud-loader"></div>
+      </div>
     </div>
   </div>
 
@@ -2767,9 +2860,12 @@
       return doc(db, "users", auth.currentUser.uid, "quantis", "workspace");
     }
     window.qSaveToFirebase = async function() {
+      // Quantis a la nube solo en plan Premium (igual que el notepad)
+      if (!window.isPremiumPlan()) return;
       var ref = qFirebaseRef();
       if (!ref) return;
       if (!window.QS) return;
+      window.showCloudLoader('quantisSaveLoader');
       try {
         await setDoc(ref, {
           projects: window.QS.projects,
@@ -2781,9 +2877,13 @@
         }, { merge: true });
       } catch (error) {
         console.warn("Error guardando Quantis en Firebase:", error);
+      } finally {
+        window.hideCloudLoader('quantisSaveLoader');
       }
     };
     window.qLoadFromFirebase = async function() {
+      // Quantis desde la nube solo en plan Premium (igual que el notepad)
+      if (!window.isPremiumPlan()) return;
       var ref = qFirebaseRef();
       if (!ref || !window.QS) return;
       try {
@@ -2846,6 +2946,27 @@
     window.storageKeyForUser = storageKeyForUser;
     window.isPremiumPlan = function() {
       return window.getPlanLimits ? window.getPlanLimits().saveNotepad === 'cloud' : false;
+    };
+
+    // --- Loader de guardado en la nube (Premium) ---
+    window._cloudLoaderCount = {};
+    window.showCloudLoader = function(id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.add('visible');
+      window._cloudLoaderCount[id] = (window._cloudLoaderCount[id] || 0) + 1;
+    };
+    window.hideCloudLoader = function(id) {
+      window._cloudLoaderCount[id] = Math.max(0, (window._cloudLoaderCount[id] || 0) - 1);
+      if (window._cloudLoaderCount[id] > 0) return;
+      var el = document.getElementById(id);
+      if (el) el.classList.remove('visible');
+    };
+    window.pulseCloudLoader = function(id) {
+      if (!window.isPremiumPlan()) return;
+      window.showCloudLoader(id);
+      setTimeout(function() {
+        window.hideCloudLoader(id);
+      }, 900);
     };
     window.saveDominonMusicCloud = async function(data) {
       if (!window.isPremiumPlan() || !auth.currentUser) return;
@@ -3091,11 +3212,14 @@
           localStorage.setItem(storageKeyForUser('notepad_page_') + '_' + window.activeTab, notepadEl.value);
           return;
        }
+       window.showCloudLoader('notepadSaveLoader');
        try {
           const userDocRef = doc(window.db, "users", window.auth.currentUser.uid, "notas", "pagina-" + window.activeTab);
           await setDoc(userDocRef, { content: notepadEl.value }, { merge: true });
        } catch (error) {
           console.error("Error guardando nota:", error);
+       } finally {
+          window.hideCloudLoader('notepadSaveLoader');
        }
     };
 
@@ -3105,6 +3229,7 @@
            if (window.getPlanLimits().saveNotepad === 'local' || !window.auth || !window.auth.currentUser) {
               window.saveCurrentNote();
            } else {
+              window.pulseCloudLoader('notepadSaveLoader');
               clearTimeout(saveTimeout);
               saveTimeout = setTimeout(window.saveCurrentNote, 800);
            }
@@ -3528,10 +3653,14 @@
     var repeatMode = repeatStateFromStorage(); // 0=off, 1=repeat all, 2=repeat one
     function onPlayerStateChange(event) {
       var playBtn = document.getElementById('playPauseBtn');
-      if (event.data === YT.PlayerState.PLAYING) {
+      if (event.data === YT.PlayerState.BUFFERING) {
+        window.showCloudLoader('musicLoader');
+      } else if (event.data === YT.PlayerState.PLAYING) {
+        window.hideCloudLoader('musicLoader');
         if (playBtn) playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
         updateSongDisplay();
       } else if (event.data === YT.PlayerState.ENDED) {
+        window.hideCloudLoader('musicLoader');
         if (playBtn) playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
         if (!window.player) return;
         if (repeatMode === 2) {
@@ -3549,6 +3678,7 @@
           } catch (e) {}
         }
       } else {
+        window.hideCloudLoader('musicLoader');
         if (playBtn) playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
       }
     }
@@ -3674,6 +3804,7 @@
         if (state === YT.PlayerState.PLAYING) {
           window.player.pauseVideo();
         } else {
+          window.showCloudLoader('musicLoader');
           window.player.playVideo();
         }
       }
@@ -3682,6 +3813,7 @@
     window.nextVideo = function() {
       if (!window.youtubePlayerReady || !window.player) return;
       try {
+        window.showCloudLoader('musicLoader');
         window.player.nextVideo();
         setTimeout(updateSongDisplay, 1000);
       } catch(err) {
@@ -3692,6 +3824,7 @@
     window.prevVideo = function() {
       if (!window.youtubePlayerReady || !window.player) return;
       try {
+        window.showCloudLoader('musicLoader');
         window.player.previousVideo();
         setTimeout(updateSongDisplay, 1000);
       } catch(err) {
@@ -3970,6 +4103,13 @@
       }
 
       document.addEventListener('DOMContentLoaded', function() {
+        var chartFrame = document.getElementById('tradingViewChart');
+        if (chartFrame) {
+          chartFrame.addEventListener('load', function() {
+            window.hideCloudLoader('chartLoader');
+          });
+          window.showCloudLoader('chartLoader');
+        }
         document.getElementById('dominonConfigBtn')?.addEventListener('click', function(e) {
           toggleConfig('dominon-config-dropdown', e);
         });
@@ -4071,6 +4211,7 @@
       if (iframe) {
         var tvTheme = themeName === 'light' ? 'light' : 'dark';
         var src = iframe.src.replace(/theme=\w+/, 'theme=' + tvTheme);
+        window.showCloudLoader('chartLoader');
         iframe.src = src;
       }
     }
@@ -4147,6 +4288,7 @@
       var isLight = view && view.classList.contains('light-theme');
       var tvTheme = isLight ? 'light' : 'dark';
       const newSrc = `https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(symbol)}&interval=D&theme=${tvTheme}&style=1&locale=es&toolbar_bg=f1f3f6&allow_symbol_change=1&enable_publishing=0&hide_side_toolbar=0&save_image=0&studies=[]&show_popup_button=0&calendar=0&hide_volume=1&no-cache`;
+      window.showCloudLoader('chartLoader');
       iframe.src = newSrc;
       localStorage.setItem(chartKey('danifu_chart_symbol_'), symbol);
       localStorage.setItem(chartKey('danifu_chart_timestamp_'), String(Date.now()));
@@ -4570,7 +4712,7 @@
           window.auth.currentUser
         ) {
           qSavePage();
-          window.qSaveToFirebase?.();
+          window.qFlushCloudSave?.();
         }
       });
 
@@ -4579,7 +4721,7 @@
       window.addEventListener("beforeunload", function () {
         if (window.auth && window.auth.currentUser) {
           qSavePage();
-          window.qSaveToFirebase?.();
+          window.qFlushCloudSave?.();
         }
       });
     }
@@ -4780,7 +4922,20 @@
     function qSaveWorkspace() {
       qSavePage();
       qPersistWorkspace();
+      if (window.isPremiumPlan && window.isPremiumPlan()) {
+        window.pulseCloudLoader('quantisSaveLoader');
+        clearTimeout(window._qCloudSaveTimer);
+        window._qCloudSaveTimer = setTimeout(function() {
+          window.qSaveToFirebase?.();
+        }, 1200);
+      }
     }
+
+    // Descarga inmediata a la nube si hay una escritura pendiente de Quantis
+    window.qFlushCloudSave = function() {
+      clearTimeout(window._qCloudSaveTimer);
+      window.qSaveToFirebase?.();
+    };
 
     // =========================================================
     // FIX: qPersistWorkspace — guarda siempre, sin chequeo de UID
@@ -4905,6 +5060,9 @@
     // =========================================================
     function qSavePage() {
       if (!QD.canvas) return;
+      if (window.isPremiumPlan && window.isPremiumPlan()) {
+        window.pulseCloudLoader('quantisSaveLoader');
+      }
       var key = QS.activeProj + "-" + QS.activePage;
       var els = [];
       QD.canvas.querySelectorAll(".q-canvas-el").forEach(function (blk) {
