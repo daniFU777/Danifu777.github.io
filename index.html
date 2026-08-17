@@ -50,53 +50,66 @@
       transform: translateY(10px) !important;
     }
 
-    /* --- Clase de Botón con Brillo Neon Multicolor (uiverse) --- */
+    /* --- Corrección de Botón Glow Multicolor (Marco fino de 1.5px y tamaño de 32px) --- */
     .glow-button {
+      height: 32px !important; /* Altura idéntica al botón de configuración y fecha-hora */
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      padding: 6px 16px;
-      height: 32px;
-      background: linear-gradient(0deg, #0c0d12, #222530) !important;
-      border-radius: 8px;
-      border: none !important;
+      gap: 6px;
+      padding: 0 14px !important; /* Relleno lateral compacto */
+      background: #1f1f1f !important; /* Fondo ultra sólido para cubrir el degradado central */
       color: #ffffff !important;
+      border-radius: 6px !important;
+      border: none !important;
       position: relative;
       cursor: pointer;
       font-family: inherit;
       font-weight: 700;
-      font-size: 0.8rem;
+      font-size: 11px !important; /* Tipografía más pequeña, limpia y profesional */
+      letter-spacing: 0.8px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
       text-decoration: none;
-      transition: transform 0.2s ease, filter 0.2s ease;
-      z-index: 1; /* Permite que los pseudo-elementos se posicionen detrás correctamente */
+      transition: transform 0.2s ease;
       box-sizing: border-box;
+      isolation: isolate; /* CRÍTICO: Garantiza que el fondo oscuro tape el degradado central y solo se vea el marco de 1.5px */
     }
 
     .glow-button:hover {
-      transform: translateY(-1.5px);
+      transform: translateY(-1px);
     }
 
     .glow-button:active {
-      transform: translateY(1px) scale(0.98);
+      transform: scale(0.97);
     }
 
-    .glow-button::before, 
+    /* MARCO FINO DE 1.5px MULTICOLOR */
+    .glow-button::before,
     .glow-button::after {
       content: '';
       position: absolute;
-      left: -2px;
-      top: -2px;
-      border-radius: 10px;
+      left: -1.5px !important; /* Desplazamiento ultra fino para simular un borde de 1.5px */
+      top: -1.5px !important;
+      border-radius: 7.5px !important; /* Ligeramente superior al del botón para alinearse en la esquina */
       background: linear-gradient(45deg, #fb0094, #0000ff, #00ff00, #ffff00, #ff0000, #fb0094, 
                   #0000ff, #00ff00, #ffff00, #ff0000);
       background-size: 400%;
-      width: calc(100% + 4px);
-      height: calc(100% + 4px);
+      width: calc(100% + 3px) !important; /* 3px extra para sobresalir exactamente 1.5px por lado */
+      height: calc(100% + 3px) !important;
       z-index: -1;
       animation: steamGlow 20s linear infinite;
+    }
+
+    /* EFECTO DE LUZ DIFUSA TRASERA */
+    .glow-button::after {
+      filter: blur(8px) !important; /* Desenfoque fino y elegante para que no inunde la interfaz */
+      opacity: 0.45;
+      transition: opacity 0.3s ease-in-out, filter 0.3s ease-in-out;
+    }
+
+    .glow-button:hover::after {
+      opacity: 0.8;
+      filter: blur(12px) !important;
     }
 
     @keyframes steamGlow {
@@ -109,18 +122,6 @@
       100% {
         background-position: 0 0;
       }
-    }
-
-    /* Efecto de luz difusa ambiental trasera */
-    .glow-button::after {
-      filter: blur(14px) !important; /* Brillo controlado y elegante para no saturar la UI */
-      opacity: 0.6;
-      transition: opacity 0.3s ease-in-out, filter 0.3s ease-in-out;
-    }
-
-    .glow-button:hover::after {
-      opacity: 0.95;
-      filter: blur(18px) !important;
     }
 
     /* ========== LOGIN SCREEN (ESTTICA EN LA RAZ) ========== */
