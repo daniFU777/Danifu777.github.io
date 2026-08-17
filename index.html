@@ -124,6 +124,72 @@
       }
     }
 
+    /* ========== BOTÓN NAVEGACIÓN NEÓN (DEEP FLOW / QUANTIS / PLANES / CONFIG) ========== */
+    .nav-neon-btn {
+      position: relative;
+      z-index: 0;
+      background: linear-gradient(0deg, #000, #272727); /* Fondo oscuro por defecto */
+      color: #ffffff !important; /* Texto blanco siempre legible sobre fondo oscuro */
+      border: none;
+      border-radius: 6px;
+      padding: 0 14px;
+      height: 32px;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-sizing: border-box;
+      transition: transform 0.2s ease;
+    }
+
+    .nav-neon-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .nav-neon-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* Resplandor de luz difusa por detrás del fondo oscuro */
+    .nav-neon-btn::before,
+    .nav-neon-btn::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      height: 100%;
+      border-radius: 6px;
+      pointer-events: none;
+      background: linear-gradient(45deg, #A855F7, #00e5ff, #39FF14, #A855F7);
+      background-size: 400%;
+      animation: steamGlow 20s linear infinite;
+    }
+
+    .nav-neon-btn::before {
+      z-index: -2;
+      filter: blur(14px);
+      opacity: 0.45;
+    }
+
+    .nav-neon-btn::after {
+      z-index: -1;
+      filter: blur(6px);
+      opacity: 0.7;
+    }
+
+    .nav-neon-btn:hover::before,
+    .nav-neon-btn:hover::after {
+      opacity: 0.9;
+    }
+
     /* ========== LOGIN SCREEN (ESTTICA EN LA RAZ) ========== */
     #loginScreen {
       position: fixed;
@@ -2028,13 +2094,13 @@
       <div class="top-bar">
         <div class="top-left">
           <div class="box" id="fecha-hora">Cargando...</div>
-          <button id="toggle-view-to-flow" class="glow-button" onclick="window.switchAppView('deep-flow-view')" title="Abrir Terminal DEEP FLOW">
+          <button id="toggle-view-to-flow" class="glow-button nav-neon-btn" onclick="window.switchAppView('deep-flow-view')" title="Abrir Terminal DEEP FLOW">
             <i class="fa-solid fa-chart-line"></i> DEEP FLOW
           </button>
-          <button id="toggle-view-to-quantis" class="glow-button" onclick="window.switchAppView('quantis-view')" title="Abrir Quantis Canvas">
+          <button id="toggle-view-to-quantis" class="glow-button nav-neon-btn" onclick="window.switchAppView('quantis-view')" title="Abrir Quantis Canvas">
             <i class="fa-solid fa-infinity"></i> QUANTIS
           </button>
-          <button id="openPlansBtn" class="glow-button" title="Planes">
+          <button id="openPlansBtn" class="glow-button nav-neon-btn" title="Planes">
             <i class="fa-solid fa-gem"></i> PLANES
           </button>
         </div>
@@ -2046,7 +2112,7 @@
               <i class="fas fa-sign-out-alt"></i>
             </button>
           </div>
-          <button class="icon-square-btn" id="dominonConfigBtn" title="Configuracion">
+          <button class="icon-square-btn nav-neon-btn" id="dominonConfigBtn" title="Configuracion">
             <i class="fa-solid fa-gear"></i>
           </button>
           <div class="music-container">
@@ -2178,8 +2244,8 @@
       <button class="ctrl-btn" id="sound-toggle">SND ON</button>
       <button class="ctrl-btn" id="stream-toggle">ON-CHAIN</button>
       <button class="ctrl-btn" id="lang-toggle">EN / ES</button>
-      <button class="glow-button" id="view-toggle" onclick="window.switchAppView('main-dashboard-view')">DOMINON</button>
-      <button class="glow-button" id="view-toggle-quantis" onclick="window.switchAppView('quantis-view')">QUANTIS</button>
+      <button class="glow-button nav-neon-btn" id="view-toggle" onclick="window.switchAppView('main-dashboard-view')">DOMINON</button>
+      <button class="glow-button nav-neon-btn" id="view-toggle-quantis" onclick="window.switchAppView('quantis-view')">QUANTIS</button>
       <button class="ctrl-btn" id="toggleMusicPanelFlow" style="border-color:#A855F7; color:#A855F7;"><i class="fa-solid fa-music"></i> REPROD</button>
       <span id="hdr-spacer"></span><span id="hdr-conn-status">[ CONNECTION HOLD / ERROR ]</span>
       <span id="hdr-date"></span><span id="hdr-clock"></span>
@@ -2598,8 +2664,8 @@
     <header id="quantis-header">
       <div id="quantis-nav-left">
         <span id="quantis-brand">QUANTIS</span>
-        <button class="glow-button" onclick="window.switchAppView('main-dashboard-view')">DOMINON</button>
-        <button class="glow-button" onclick="window.switchAppView('deep-flow-view')">DEEP FLOW</button>
+        <button class="glow-button nav-neon-btn" onclick="window.switchAppView('main-dashboard-view')">DOMINON</button>
+        <button class="glow-button nav-neon-btn" onclick="window.switchAppView('deep-flow-view')">DEEP FLOW</button>
       </div>
       <div id="quantis-nav-right">
         <span id="quantis-clock">00:00:00</span>
@@ -2609,7 +2675,7 @@
           <input type="file" id="q-import-project-input" accept=".json,application/json" style="display:none;">
           <button class="q-tool-btn" id="q-center-canvas-btn" type="button" title="Centrar Canvas"><i class="fa-solid fa-crosshairs"></i></button>
         </div>
-        <button class="icon-square-btn" id="quantisConfigBtn" title="Configuracion">
+        <button class="icon-square-btn nav-neon-btn" id="quantisConfigBtn" title="Configuracion">
           <i class="fa-solid fa-gear"></i>
         </button>
         <button id="toggleMusicPanelQuantis" title="Reproductor de Música">
