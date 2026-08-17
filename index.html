@@ -50,6 +50,79 @@
       transform: translateY(10px) !important;
     }
 
+    /* --- Clase de Botón con Brillo Neon Multicolor (uiverse) --- */
+    .glow-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 6px 16px;
+      height: 32px;
+      background: linear-gradient(0deg, #0c0d12, #222530) !important;
+      border-radius: 8px;
+      border: none !important;
+      color: #ffffff !important;
+      position: relative;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-decoration: none;
+      transition: transform 0.2s ease, filter 0.2s ease;
+      z-index: 1; /* Permite que los pseudo-elementos se posicionen detrás correctamente */
+      box-sizing: border-box;
+    }
+
+    .glow-button:hover {
+      transform: translateY(-1.5px);
+    }
+
+    .glow-button:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .glow-button::before, 
+    .glow-button::after {
+      content: '';
+      position: absolute;
+      left: -2px;
+      top: -2px;
+      border-radius: 10px;
+      background: linear-gradient(45deg, #fb0094, #0000ff, #00ff00, #ffff00, #ff0000, #fb0094, 
+                  #0000ff, #00ff00, #ffff00, #ff0000);
+      background-size: 400%;
+      width: calc(100% + 4px);
+      height: calc(100% + 4px);
+      z-index: -1;
+      animation: steamGlow 20s linear infinite;
+    }
+
+    @keyframes steamGlow {
+      0% {
+        background-position: 0 0;
+      }
+      50% {
+        background-position: 400% 0;
+      }
+      100% {
+        background-position: 0 0;
+      }
+    }
+
+    /* Efecto de luz difusa ambiental trasera */
+    .glow-button::after {
+      filter: blur(14px) !important; /* Brillo controlado y elegante para no saturar la UI */
+      opacity: 0.6;
+      transition: opacity 0.3s ease-in-out, filter 0.3s ease-in-out;
+    }
+
+    .glow-button:hover::after {
+      opacity: 0.95;
+      filter: blur(18px) !important;
+    }
+
     /* ========== LOGIN SCREEN (ESTTICA EN LA RAZ) ========== */
     #loginScreen {
       position: fixed;
@@ -1954,13 +2027,13 @@
       <div class="top-bar">
         <div class="top-left">
           <div class="box" id="fecha-hora">Cargando...</div>
-          <button id="toggle-view-to-flow" class="music-btn" onclick="window.switchAppView('deep-flow-view')" title="Abrir Terminal DEEP FLOW" style="background: var(--color-input-bg); color: #00F0FF; border: 1px solid #00F0FF;">
+          <button id="toggle-view-to-flow" class="glow-button" onclick="window.switchAppView('deep-flow-view')" title="Abrir Terminal DEEP FLOW">
             <i class="fa-solid fa-chart-line"></i> DEEP FLOW
           </button>
-          <button id="toggle-view-to-quantis" class="music-btn" onclick="window.switchAppView('quantis-view')" title="Abrir Quantis Canvas" style="background: var(--color-input-bg); color: #A855F7; border: 1px solid #A855F7;">
+          <button id="toggle-view-to-quantis" class="glow-button" onclick="window.switchAppView('quantis-view')" title="Abrir Quantis Canvas">
             <i class="fa-solid fa-infinity"></i> QUANTIS
           </button>
-          <button id="openPlansBtn" class="music-btn" title="Planes">
+          <button id="openPlansBtn" class="glow-button" title="Planes">
             <i class="fa-solid fa-gem"></i> PLANES
           </button>
         </div>
@@ -2104,8 +2177,8 @@
       <button class="ctrl-btn" id="sound-toggle">SND ON</button>
       <button class="ctrl-btn" id="stream-toggle">ON-CHAIN</button>
       <button class="ctrl-btn" id="lang-toggle">EN / ES</button>
-      <button class="ctrl-btn" id="view-toggle" onclick="window.switchAppView('main-dashboard-view')" style="border-color:#A855F7; color:#A855F7; font-weight:bold; text-shadow:0 0 4px rgba(168,85,247,0.4);">DOMINON</button>
-      <button class="ctrl-btn" id="view-toggle-quantis" onclick="window.switchAppView('quantis-view')" style="border-color:#A855F7; color:#A855F7; font-weight:bold; text-shadow:0 0 4px rgba(168,85,247,0.4);">QUANTIS</button>
+      <button class="glow-button" id="view-toggle" onclick="window.switchAppView('main-dashboard-view')">DOMINON</button>
+      <button class="glow-button" id="view-toggle-quantis" onclick="window.switchAppView('quantis-view')">QUANTIS</button>
       <button class="ctrl-btn" id="toggleMusicPanelFlow" style="border-color:#A855F7; color:#A855F7;"><i class="fa-solid fa-music"></i> REPROD</button>
       <span id="hdr-spacer"></span><span id="hdr-conn-status">[ CONNECTION HOLD / ERROR ]</span>
       <span id="hdr-date"></span><span id="hdr-clock"></span>
@@ -2524,8 +2597,8 @@
     <header id="quantis-header">
       <div id="quantis-nav-left">
         <span id="quantis-brand">QUANTIS</span>
-        <button class="q-nav-btn" onclick="window.switchAppView('main-dashboard-view')">DOMINON</button>
-        <button class="q-nav-btn" onclick="window.switchAppView('deep-flow-view')">DEEP FLOW</button>
+        <button class="glow-button" onclick="window.switchAppView('main-dashboard-view')">DOMINON</button>
+        <button class="glow-button" onclick="window.switchAppView('deep-flow-view')">DEEP FLOW</button>
       </div>
       <div id="quantis-nav-right">
         <span id="quantis-clock">00:00:00</span>
