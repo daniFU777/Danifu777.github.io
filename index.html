@@ -50,31 +50,23 @@
       transform: translateY(10px) !important;
     }
 
-    /* --- Botón de navegación estándar (estilo estático, sin neón) --- */
+    /* --- Botón de navegación: solo texto, sin fondo ni borde --- */
     .glow-button {
-      height: 32px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 0 14px;
-      background: var(--color-input-bg);
+      background: transparent;
+      border: none;
+      padding: 0;
       color: var(--color-text);
-      border: 1px solid var(--color-border);
-      border-radius: 6px;
       font-family: inherit;
-      font-weight: 700;
-      font-size: 11px;
-      letter-spacing: 0.8px;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 0.5px;
       text-transform: uppercase;
       cursor: pointer;
-      box-sizing: border-box;
-      transition: border-color 0.2s ease, background 0.2s ease;
+      transition: color 0.2s ease;
     }
 
     .glow-button:hover {
-      border-color: var(--color-highlight);
-      background: rgba(168, 85, 247, 0.1);
+      color: var(--color-highlight);
     }
 
     /* ========== LOGIN SCREEN (ESTTICA EN LA RAZ) ========== */
