@@ -139,12 +139,6 @@
       top: 8px;
       right: 8px;
     }
-    /* Loader del gráfico (centrado sobre el panel) */
-    #chartLoader {
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    }
 
     /* ========== LOGIN SCREEN (ESTTICA EN LA RAZ) ========== */
     #loginScreen {
@@ -2093,9 +2087,6 @@
           <iframe class="chart-iframe" id="tradingViewChart"
             src="https://s.tradingview.com/widgetembed/?symbol=BINANCE%3AUSDTARS&interval=D&theme=dark&style=1&locale=es&toolbar_bg=f1f3f6&allow_symbol_change=1&enable_publishing=0&hide_side_toolbar=0&save_image=0&studies=[]&show_popup_button=0&calendar=0&hide_volume=1&amp;no-cache"
             frameborder="0" allowfullscreen></iframe>
-          <div id="chartLoader" class="cloud-loader-wrap" title="Cargando gráfico...">
-            <div class="cloud-loader"></div>
-          </div>
         </div>
 
         <div class="notepad-panel">
@@ -2995,31 +2986,6 @@
         }
       } catch (e) { console.warn("Error cargando música desde Firebase:", e); }
     };
-    window.saveTradingCloud = async function(data) {
-      if (!window.isPremiumPlan() || !auth.currentUser) return;
-      try {
-        await setDoc(doc(db, "users", auth.currentUser.uid, "dominon", "trading"),
-          Object.assign({}, data, { savedAt: Date.now() }), { merge: true });
-      } catch (e) { console.warn("Error guardando TradingView en Firebase:", e); }
-    };
-    window.loadTradingCloud = async function() {
-      if (!window.isPremiumPlan() || !auth.currentUser) return;
-      try {
-        var snap = await getDoc(doc(db, "users", auth.currentUser.uid, "dominon", "trading"));
-        if (!snap.exists()) return;
-        var data = snap.data();
-        if (!data) return;
-        var localAt = 0;
-        try { localAt = parseInt(localStorage.getItem(storageKeyForUser('danifu_chart_timestamp_')) || '0', 10) || 0; } catch (e) {}
-        if ((data.savedAt || 0) > localAt) {
-          localStorage.setItem(storageKeyForUser('danifu_chart_timestamp_'), String(data.savedAt));
-          if (data.symbol) {
-            localStorage.setItem(storageKeyForUser('danifu_chart_symbol_'), data.symbol);
-            if (window.changeSymbol) window.changeSymbol(data.symbol);
-          }
-        }
-      } catch (e) { console.warn("Error cargando TradingView desde Firebase:", e); }
-    };
     window.createdPagesCount = parseInt(localStorage.getItem(storageKeyForUser('danifu_pages_count_')), 10) || 3;
 
     async function detectUserPlan(user) {
@@ -3108,9 +3074,6 @@
         // sesión, así que aquí se asegura que cada usuario vea su propio proyecto.
         window.qReloadWorkspace?.();
         window.qLoadFromFirebase?.();
-        if (window.isPremiumPlan && window.isPremiumPlan() && window.loadTradingCloud) {
-          window.loadTradingCloud();
-        }
 
       } else {
         window.applyMembershipPlan('normal');
@@ -3148,6 +3111,7 @@
 
     setInterval(() => {
        if (auth.currentUser && window.player) {
+          window.showCloudLoader('musicLoader');
           try {
               const currentTime = Math.floor(window.player.getCurrentTime());
               const videoData = window.player.getVideoData();
@@ -3168,8 +3132,9 @@
           } catch (error) {
              console.log("Error guardando msica:", error);
           }
+          setTimeout(() => { window.hideCloudLoader('musicLoader'); }, 1500);
        }
-    }, 10000);
+    }, 30000);
 
     // =========================================================
     // --- NOTEPAD CONTROLLER (LOCAL & CLOUD) ---
@@ -3653,14 +3618,10 @@
     var repeatMode = repeatStateFromStorage(); // 0=off, 1=repeat all, 2=repeat one
     function onPlayerStateChange(event) {
       var playBtn = document.getElementById('playPauseBtn');
-      if (event.data === YT.PlayerState.BUFFERING) {
-        window.showCloudLoader('musicLoader');
-      } else if (event.data === YT.PlayerState.PLAYING) {
-        window.hideCloudLoader('musicLoader');
+      if (event.data === YT.PlayerState.PLAYING) {
         if (playBtn) playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
         updateSongDisplay();
       } else if (event.data === YT.PlayerState.ENDED) {
-        window.hideCloudLoader('musicLoader');
         if (playBtn) playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
         if (!window.player) return;
         if (repeatMode === 2) {
@@ -3678,7 +3639,6 @@
           } catch (e) {}
         }
       } else {
-        window.hideCloudLoader('musicLoader');
         if (playBtn) playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
       }
     }
@@ -3804,7 +3764,6 @@
         if (state === YT.PlayerState.PLAYING) {
           window.player.pauseVideo();
         } else {
-          window.showCloudLoader('musicLoader');
           window.player.playVideo();
         }
       }
@@ -3813,7 +3772,6 @@
     window.nextVideo = function() {
       if (!window.youtubePlayerReady || !window.player) return;
       try {
-        window.showCloudLoader('musicLoader');
         window.player.nextVideo();
         setTimeout(updateSongDisplay, 1000);
       } catch(err) {
@@ -3824,7 +3782,6 @@
     window.prevVideo = function() {
       if (!window.youtubePlayerReady || !window.player) return;
       try {
-        window.showCloudLoader('musicLoader');
         window.player.previousVideo();
         setTimeout(updateSongDisplay, 1000);
       } catch(err) {
@@ -4103,13 +4060,6 @@
       }
 
       document.addEventListener('DOMContentLoaded', function() {
-        var chartFrame = document.getElementById('tradingViewChart');
-        if (chartFrame) {
-          chartFrame.addEventListener('load', function() {
-            window.hideCloudLoader('chartLoader');
-          });
-          window.showCloudLoader('chartLoader');
-        }
         document.getElementById('dominonConfigBtn')?.addEventListener('click', function(e) {
           toggleConfig('dominon-config-dropdown', e);
         });
@@ -4211,7 +4161,6 @@
       if (iframe) {
         var tvTheme = themeName === 'light' ? 'light' : 'dark';
         var src = iframe.src.replace(/theme=\w+/, 'theme=' + tvTheme);
-        window.showCloudLoader('chartLoader');
         iframe.src = src;
       }
     }
@@ -4276,10 +4225,6 @@
     };
 
     // Grfico TradingView
-    function chartKey(base) {
-      if (window.storageKeyForUser) return window.storageKeyForUser(base);
-      return base + (window.auth && window.auth.currentUser ? window.auth.currentUser.uid : 'guest');
-    }
     window.changeSymbol = function (symbol) {
       if (!symbol) return;
       const iframe = document.getElementById('tradingViewChart');
@@ -4288,13 +4233,7 @@
       var isLight = view && view.classList.contains('light-theme');
       var tvTheme = isLight ? 'light' : 'dark';
       const newSrc = `https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(symbol)}&interval=D&theme=${tvTheme}&style=1&locale=es&toolbar_bg=f1f3f6&allow_symbol_change=1&enable_publishing=0&hide_side_toolbar=0&save_image=0&studies=[]&show_popup_button=0&calendar=0&hide_volume=1&no-cache`;
-      window.showCloudLoader('chartLoader');
       iframe.src = newSrc;
-      localStorage.setItem(chartKey('danifu_chart_symbol_'), symbol);
-      localStorage.setItem(chartKey('danifu_chart_timestamp_'), String(Date.now()));
-      if (window.isPremiumPlan && window.isPremiumPlan() && window.saveTradingCloud) {
-        window.saveTradingCloud({ symbol: symbol });
-      }
     };
 
     // Pomodoro
@@ -4526,10 +4465,6 @@
       if (typeof window.setTheme === 'function') {
         window.setTheme(savedDominonTheme, 'main-dashboard-view');
         window.setTheme(savedQuantisTheme, 'quantis-view');
-      }
-      const savedSymbol = localStorage.getItem('danifu_chart_symbol') || localStorage.getItem(chartKey('danifu_chart_symbol_'));
-      if (savedSymbol && typeof window.changeSymbol === 'function') {
-        window.changeSymbol(savedSymbol);
       }
       if (typeof window.updatePomoUI === 'function') {
         window.updatePomoUI();
