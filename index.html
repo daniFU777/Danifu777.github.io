@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DANIFU777 - Dominon </title>
+  <title> Dominon </title>
   <link rel="icon" type="image/png" href="Favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
@@ -2718,6 +2718,7 @@
             <li>3 paginas de Notepad, local only</li>
             <li>Quantis: 2 proyectos, 3 paginas/proyecto, canvas 2000x2000px</li>
             <li>Sin herramientas de dibujo</li>
+            <li>Asistente Gemini: historial local</li>
           </ul>
         </button>
         <button class="plan-option" type="button" data-plan-choice="Extended">
@@ -2727,6 +2728,7 @@
             <li>5 paginas de Notepad, local + export</li>
             <li>Quantis: 4 proyectos, 7 paginas/proyecto, canvas 4000x4000px</li>
             <li>Export/Import de workspace</li>
+            <li>Asistente Gemini: historial local</li>
           </ul>
         </button>
         <button class="plan-option" type="button" data-plan-choice="Premium">
@@ -2736,6 +2738,7 @@
             <li>10 paginas de Notepad en cloud</li>
             <li>Quantis: 10 proyectos, 20 paginas/proyecto, canvas 8000x8000px</li>
             <li>Drawing Tools y Priority Support</li>
+            <li>Asistente Gemini: historial sincronizado en la nube</li>
           </ul>
         </button>
       </div>
@@ -2985,6 +2988,26 @@
           if (typeof window.applyMusicSavedData === 'function') window.applyMusicSavedData(data);
         }
       } catch (e) { console.warn("Error cargando música desde Firebase:", e); }
+    };
+    // --- Gemini chats: cloud sync (solo Premium) ---
+    window.saveGeminiCloud = async function(chats) {
+      if (!window.isPremiumPlan() || !auth.currentUser) return;
+      try {
+        await setDoc(doc(db, "users", auth.currentUser.uid, "gemini", "chats"),
+          { chats: chats, savedAt: Date.now() }, { merge: true });
+      } catch (e) { console.warn("Error guardando chats de Gemini en Firebase:", e); }
+    };
+    window.loadGeminiCloud = async function() {
+      if (!window.isPremiumPlan() || !auth.currentUser) return;
+      try {
+        var snap = await getDoc(doc(db, "users", auth.currentUser.uid, "gemini", "chats"));
+        if (!snap.exists()) return;
+        var data = snap.data();
+        if (!data || !data.chats) return;
+        localStorage.setItem(storageKeyForUser('gemini_chats_history_'), JSON.stringify(data.chats));
+      if (typeof window.initGeminiAssistant === 'function') window.initGeminiAssistant();
+      if (window.isPremiumPlan && window.isPremiumPlan() && window.loadGeminiCloud) window.loadGeminiCloud();
+      } catch (e) { console.warn("Error cargando chats de Gemini desde Firebase:", e); }
     };
     window.createdPagesCount = parseInt(localStorage.getItem(storageKeyForUser('danifu_pages_count_')), 10) || 3;
 
@@ -3314,16 +3337,91 @@
       }
     }
 
-    function writeGeminiKeyForUser(apiKey) {
-      var store = readGeminiKeyStore();
-      var scope = getGeminiUserScope();
-      if (apiKey) store[scope] = apiKey;
-      else delete store[scope];
-      localStorage.setItem('danifu_gemini_api_key', JSON.stringify(store));
+    // --- Cifrado local de la API Key ---
+    // Se guarda cifrada (AES-GCM vía Web Crypto cuando está disponible),
+    // con fallback XOR+base64 para contextos sin crypto.subtle (ej. file://).
+    var GEMINI_ENC_SECRET = 'danifu_gemini_local_secret_v1';
+
+    function geminiXorCrypt(str) {
+      try {
+        var out = '';
+        for (var i = 0; i < str.length; i++) {
+          out += String.fromCharCode(str.charCodeAt(i) ^ GEMINI_ENC_SECRET.charCodeAt(i % GEMINI_ENC_SECRET.length));
+        }
+        return 'ENC0:' + btoa(out);
+      } catch (e) { return null; }
+    }
+    function geminiXorDecrypt(payload) {
+      try {
+        var raw = atob(payload.slice(5));
+        var out = '';
+        for (var i = 0; i < raw.length; i++) {
+          out += String.fromCharCode(raw.charCodeAt(i) ^ GEMINI_ENC_SECRET.charCodeAt(i % GEMINI_ENC_SECRET.length));
+        }
+        return out;
+      } catch (e) { return ''; }
+    }
+    async function geminiEncryptText(plain) {
+      try {
+        if (window.crypto && window.crypto.subtle && window.crypto.subtle.encrypt) {
+          var enc = new TextEncoder();
+          var baseKey = await crypto.subtle.importKey('raw', enc.encode(GEMINI_ENC_SECRET), 'PBKDF2', false, ['deriveKey']);
+          var aesKey = await crypto.subtle.deriveKey(
+            { name: 'PBKDF2', salt: enc.encode('danifu_gemini_salt'), iterations: 60000, hash: 'SHA-256' },
+            baseKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+          );
+          var iv = crypto.getRandomValues(new Uint8Array(12));
+          var ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, aesKey, enc.encode(plain));
+          var ivB64 = btoa(String.fromCharCode.apply(null, iv));
+          var ctB64 = btoa(String.fromCharCode.apply(null, new Uint8Array(ct)));
+          return 'ENC1:' + ivB64 + ':' + ctB64;
+        }
+      } catch (e) {}
+      return geminiXorCrypt(plain);
+    }
+    async function geminiDecryptText(payload) {
+      if (!payload) return '';
+      try {
+        if (payload.indexOf('ENC1:') === 0 && window.crypto && window.crypto.subtle && window.crypto.subtle.decrypt) {
+          var parts = payload.slice(5).split(':');
+          if (parts.length < 2) return '';
+          var enc = new TextEncoder();
+          var baseKey = await crypto.subtle.importKey('raw', enc.encode(GEMINI_ENC_SECRET), 'PBKDF2', false, ['deriveKey']);
+          var aesKey = await crypto.subtle.deriveKey(
+            { name: 'PBKDF2', salt: enc.encode('danifu_gemini_salt'), iterations: 60000, hash: 'SHA-256' },
+            baseKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+          );
+          var iv = Uint8Array.from(atob(parts[0]), function(c){ return c.charCodeAt(0); });
+          var ct = Uint8Array.from(atob(parts[1]), function(c){ return c.charCodeAt(0); });
+          var pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, aesKey, ct);
+          return new TextDecoder().decode(pt);
+        }
+        if (payload.indexOf('ENC0:') === 0) return geminiXorDecrypt(payload);
+      } catch (e) {}
+      return '';
     }
 
-    function getGeminiKeyForUser() {
-      return readGeminiKeyStore()[getGeminiUserScope()] || '';
+    async function writeGeminiKeyForUser(apiKey) {
+      var store = readGeminiKeyStore();
+      var scope = getGeminiUserScope();
+      if (apiKey) {
+        var enc = await geminiEncryptText(apiKey.trim());
+        if (!enc) { window.showPlanPopup('No se pudo cifrar la API Key en este navegador.'); return false; }
+        store[scope] = enc;
+      } else {
+        delete store[scope];
+      }
+      localStorage.setItem('danifu_gemini_api_key', JSON.stringify(store));
+      return true;
+    }
+
+    async function getGeminiKeyForUser() {
+      var raw = readGeminiKeyStore()[getGeminiUserScope()] || '';
+      if (!raw) return '';
+      if (raw.indexOf('ENC0:') === 0 || raw.indexOf('ENC1:') === 0) {
+        return await geminiDecryptText(raw);
+      }
+      return raw; // formato legacy (texto plano) -> se re-cifra al volver a guardar
     }
 
     // =========================================================
@@ -3357,6 +3455,9 @@
       var chats = geminiLoadChats();
       chats['chat_' + tab] = messages;
       geminiSaveChats(chats);
+      if (window.isPremiumPlan && window.isPremiumPlan() && window.saveGeminiCloud) {
+        window.saveGeminiCloud(chats);
+      }
     }
 
     function geminiRenderTabs() {
@@ -3419,27 +3520,9 @@
       geminiSetChat(geminiActiveTab, msgs);
     }
 
-    function geminiBuildContext() {
-      var parts = [];
-      var notepad = document.getElementById('notepad');
-      if (notepad && notepad.value.trim()) {
-        parts.push('The user\'s active notes are:\n' + notepad.value.trim());
-      }
-      try {
-        var qData = JSON.parse(localStorage.getItem(quantisStorageKey()) || '{}');
-        if (qData.projects && qData.projects.length) {
-          var summary = qData.projects.map(function(p) {
-            return p.name + ' (' + (p.pages || []).length + ' pages)';
-          }).join('; ');
-          parts.push('Current Quantis projects: ' + summary);
-        }
-      } catch (e) {}
-      return parts.length ? parts.join('\n') : '';
-    }
-
     window.initGeminiAssistant = function() {
       var keyInput = document.getElementById('geminiApiKeyInput');
-      if (keyInput) keyInput.value = getGeminiKeyForUser();
+      if (keyInput) getGeminiKeyForUser().then(function(k) { keyInput.value = k; });
       geminiRenderTabs();
       geminiLoadChat(geminiActiveTab);
     };
@@ -3449,15 +3532,16 @@
       if (row) row.classList.toggle('hidden');
     });
 
-    document.getElementById('saveGeminiKeyBtn')?.addEventListener('click', function() {
+    document.getElementById('saveGeminiKeyBtn')?.addEventListener('click', async function() {
       var keyInput = document.getElementById('geminiApiKeyInput');
-      writeGeminiKeyForUser(keyInput ? keyInput.value.trim() : '');
+      var ok = await writeGeminiKeyForUser(keyInput ? keyInput.value.trim() : '');
+      if (ok === false) return;
       document.getElementById('geminiKeyRow')?.classList.add('hidden');
       window.showPlanPopup('Gemini API Key guardada para este usuario.');
     });
 
-    document.getElementById('deleteGeminiKeyBtn')?.addEventListener('click', function() {
-      writeGeminiKeyForUser('');
+    document.getElementById('deleteGeminiKeyBtn')?.addEventListener('click', async function() {
+      await writeGeminiKeyForUser('');
       var keyInput = document.getElementById('geminiApiKeyInput');
       if (keyInput) keyInput.value = '';
       document.getElementById('geminiKeyRow')?.classList.add('hidden');
@@ -3470,18 +3554,26 @@
       geminiLoadChat(geminiActiveTab);
     });
 
-    function geminiSendMessage() {
+    async function geminiSendMessage() {
       var promptInput = document.getElementById('geminiPromptInput');
       var prompt = promptInput ? promptInput.value.trim() : '';
-      var apiKey = getGeminiKeyForUser();
+      var apiKey = await getGeminiKeyForUser();
       if (!apiKey) return window.showPlanPopup('Guarda tu Google AI Studio API Key primero.');
       if (!prompt) return;
 
-      var context = geminiBuildContext();
-      var fullPrompt = context ? context + '\n\nUser question: ' + prompt : prompt;
+      var fullPrompt = prompt;
 
       appendGeminiMessage('user', prompt);
       if (promptInput) promptInput.value = '';
+
+      var history = document.getElementById('geminiChatHistory');
+      var loadingEl = document.createElement('div');
+      loadingEl.className = 'gemini-message gemini-assistant';
+      loadingEl.textContent = 'Cargando...';
+      if (history) {
+        history.appendChild(loadingEl);
+        history.scrollTop = history.scrollHeight;
+      }
 
       fetch('https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(apiKey), {
         method: 'POST',
@@ -3490,6 +3582,7 @@
       })
       .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
       .then(function(result) {
+        if (loadingEl && loadingEl.parentNode) loadingEl.parentNode.removeChild(loadingEl);
         if (!result.ok) {
           var googleError = result.data?.error?.message || 'Error';
           appendGeminiMessage('assistant', 'Google API Error: ' + googleError);
@@ -3499,6 +3592,7 @@
         appendGeminiMessage('assistant', text || 'No response received.');
       })
       .catch(function(error) {
+        if (loadingEl && loadingEl.parentNode) loadingEl.parentNode.removeChild(loadingEl);
         console.error("Error de conexión:", error);
         appendGeminiMessage('assistant', 'Error de conexión. Revisa tu consola de desarrollador.');
       });
